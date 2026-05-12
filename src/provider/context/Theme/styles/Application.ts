@@ -5,7 +5,6 @@ import { Theme } from '../types';
 const applicationStyles = (theme: Theme) =>
   StyleSheet.create({
     loading_container: {
-      flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
       backgroundColor: createColor('background', theme)

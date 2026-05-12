@@ -27,7 +27,6 @@ const TimeRecords = () => {
 
   const { applicationStyles } = useContext(ThemeContext);
   const [days, setDays] = React.useState<Day[]>([]);
-  const [resetTimer] = useState(false);
   const [currentWeek, setCurrentWeek] = useState<number>(0);
   const [currentWeekKey, setCurrentWeekKey] = useState<string>(() => {
     const now = new Date();
@@ -207,7 +206,7 @@ const TimeRecords = () => {
                 justifyContent: 'center'
               }}
             >
-              <Timer resetTimer={resetTimer} disabled={disabledTimer} />
+              <Timer disabled={disabledTimer} />
             </View>
           )}
           {siteState.value === 'overview' && (

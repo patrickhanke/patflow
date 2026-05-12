@@ -15,7 +15,7 @@ const DisplayTime = ({ timerState, start, breaks }: DisplayTimeProps) => {
   const { themeColors } = useContext(ThemeContext);
 
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: ReturnType<typeof setInterval>;
     interval = setInterval(() => {
       if (timerState === 'pause' || timerState === 'clock') {
         setDuration(prevSeconds => prevSeconds + 1000);

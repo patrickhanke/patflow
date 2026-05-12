@@ -46,7 +46,8 @@ const CreateTime = ({
   refetch,
   afterSaveHandler,
   dataHasChanged,
-  setDataHasChanged
+  setDataHasChanged,
+  discardTimeHandler
 }: CreateTimeProps) => {
   const { user, indicatorHandler, isConnected } = useContext(AppContext);
   const { themeColors, applicationStyles } = useContext(ThemeContext);
@@ -161,8 +162,6 @@ const CreateTime = ({
     },
     [record, user, id, indicatorHandler, refetch]
   );
-
-  console.log({ time });
 
   const dateButtonValues = useMemo(() => {
     let text = 'Datum wählen';
@@ -388,6 +387,17 @@ const CreateTime = ({
               }
             }}
           />
+          {discardTimeHandler && (
+            <Button
+              size="medium"
+              color={themeColors.light}
+              fontColor={themeColors.text}
+              text="Zeit Verwerfen"
+              onPress={() => {
+                discardTimeHandler();
+              }}
+            />
+          )}
           <Button
             size="medium"
             color={themeColors.primary}

@@ -6,7 +6,7 @@ import React, {
   useRef,
   useState
 } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, Text, View, Alert } from 'react-native';
 import Ion from 'react-native-vector-icons/Ionicons';
 import styles from './styles';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -25,8 +25,8 @@ import useButtonColors from './hooks/useButtonColors';
 import { timer_pause, timer_start } from './constants/storage_keys';
 import checkTimerValidity from './functions/checkTimerValidity';
 
-const Timer = ({ resetTimer = false, disabled, refetch }: TimerProps) => {
-  const { themeColors } = useContext(ThemeContext);
+const Timer = ({ disabled }: TimerProps) => {
+  const { themeColors, theme } = useContext(ThemeContext);
   const [start, setStart] = useState<Date | undefined>(undefined);
   const [timerState, setTimerState] = useState<TimerStates | undefined>(
     undefined
@@ -35,16 +35,7 @@ const Timer = ({ resetTimer = false, disabled, refetch }: TimerProps) => {
   const [end, setEnd] = useState<Date | undefined>(undefined);
   const [endValue, setEndValue] = useState<DayTime>();
   const hasUserStartedRef = useRef(false);
-
-  useEffect(() => {
-    if (resetTimer) {
-      setStart(undefined);
-      setTimerState(undefined);
-      setBreaks([]);
-      setEnd(undefined);
-      hasUserStartedRef.current = false;
-    }
-  }, [resetTimer]);
+  const [discardTimeModalVisible, setDiscardTimeModalVisible] = useState(false);
 
   useEffect(() => {
     const getStoreData = async () => {
@@ -192,6 +183,38 @@ const Timer = ({ resetTimer = false, disabled, refetch }: TimerProps) => {
     disabled
   });
 
+  useEffect(() => {
+    if (discardTimeModalVisible) {
+      Alert.alert(
+        'Zeiten verwerfen',
+        'Sind Sie sicher, dass Sie die Zeiten verwerfen und den Timer beenden wollen?',
+        [
+          {
+            text: 'Abbrechen',
+            onPress: () => setDiscardTimeModalVisible(false),
+            style: 'cancel'
+          },
+          {
+            text: 'Verwerfen',
+            onPress: async () => {
+              setDiscardTimeModalVisible(false);
+              setStart(undefined);
+              setTimerState(undefined);
+              setBreaks([]);
+              setEnd(undefined);
+              setEndValue(undefined);
+              hasUserStartedRef.current = false;
+              await clearTimerStorage();
+            }
+          }
+        ],
+        {
+          userInterfaceStyle: theme === 'dark' ? 'dark' : 'light'
+        }
+      );
+    }
+  }, [discardTimeModalVisible]);
+
   return (
     <>
       <View style={styles.timer_container}>
@@ -314,7 +337,6 @@ const Timer = ({ resetTimer = false, disabled, refetch }: TimerProps) => {
             date={formatISO9075(new Date(endValue?.start ?? ''), {
               representation: 'date'
             })}
-            refetch={refetch}
             afterSaveHandler={async success => {
               setStart(undefined);
               setTimerState(undefined);
@@ -325,6 +347,9 @@ const Timer = ({ resetTimer = false, disabled, refetch }: TimerProps) => {
               if (success) {
                 await clearTimerStorage();
               }
+            }}
+            discardTimeHandler={async () => {
+              setDiscardTimeModalVisible(true);
             }}
           />
         </Modal>

@@ -20,9 +20,8 @@ const styles = StyleSheet.create({
     alignItems: 'center'
   },
   time_buttons_container: {
-    flex: 0.8,
     display: 'flex',
-    flexDirection: 'column',
+    flexDirection: 'row',
     justifyContent: 'flex-start',
     gap: 12,
     alignItems: 'center'
@@ -37,7 +36,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1.2
   },
   edit_time_display_text: {
-    fontSize: 32,
+    fontSize: 24,
     fontWeight: '500'
   },
   pause_input: {

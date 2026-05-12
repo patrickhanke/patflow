@@ -9,12 +9,11 @@ const styles = StyleSheet.create({
     gap: 24
   },
   image_container: {
-    flexBasis: 30,
+    overflow: 'visible',
     minHeight: 120,
     maxHeight: 240
   },
   multi_images_container: {
-    flex: 1,
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'flex-start',
@@ -30,7 +29,6 @@ const styles = StyleSheet.create({
     overflow: 'visible'
   },
   multi_images_container_overview: {
-    flex: 1,
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'flex-start',
@@ -44,7 +42,8 @@ const styles = StyleSheet.create({
     height: 'auto',
     overflow: 'hidden',
     margin: 6,
-    borderRadius: 6
+    borderRadius: 6,
+    paddingHorizontal: 12
   },
   icons_container: {
     // width: '100%',
@@ -68,8 +67,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     zIndex: 5,
     // elevation: 5,
-    top: 6,
-    right: -6,
+    top: 0,
+    right: 0,
     padding: 3,
     borderRadius: 12
   },

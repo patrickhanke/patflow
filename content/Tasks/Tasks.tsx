@@ -42,7 +42,7 @@ const Tasks = ({ route }: TasksProps) => {
 
   const reloadDate = React.useCallback(() => {
     const now = new Date();
-    const weekKey = `${getYear(now)}-${getWeek(now, { weekStartsOn: 1 })}`;
+    const weekKey = `${getYear(now)}-${getWeek(new Date('2026-05-10'), { weekStartsOn: 1 })}`;
     if (weekKey !== currentWeekKey) {
       setCurrentWeekKey(weekKey);
     }
@@ -84,7 +84,7 @@ const Tasks = ({ route }: TasksProps) => {
       next_week: nextWeek,
       after_next_week: afterNextWeek
     };
-  }, [isAdmin, tasks, usersFilter, currentWeekKey]);
+  }, [isAdmin, tasks, usersFilter, currentWeekKey, refreshing]);
 
   const weekNumberHandler = (sectionWeek: TaskSection) => {
     let weekNumber = 0;
@@ -97,7 +97,6 @@ const Tasks = ({ route }: TasksProps) => {
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    console.log('loading tasks');
     reloadDate();
     await loadTasks();
     setRefreshing(false);

@@ -33,7 +33,7 @@ import {
 import ObjectSelectWithState from './ObjectSelectWithState';
 import { Asset } from 'react-native-image-picker';
 import uuid from 'react-native-uuid';
-import { ObjectSelect, Ticket as TicketType } from '@types';
+import { ObjectSelect } from '@types';
 import { v4 as uuidv4 } from 'uuid';
 
 const CreateTicket = ({
@@ -42,7 +42,7 @@ const CreateTicket = ({
   setModalDataHasChanged,
   closeModal
 }: {
-  refetch: () => Promise<TicketType[]>;
+  refetch: () => void;
   modalDataHasChanged: boolean;
   setModalDataHasChanged: Dispatch<SetStateAction<boolean>>;
   closeModal?: () => void;

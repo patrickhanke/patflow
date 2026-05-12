@@ -36,7 +36,10 @@ const sortTasksForList = (array: Array<Task>) => {
           const week = getWeek(new Date(arrayDate), {
             weekStartsOn: 1
           });
-          const currentWeek = getWeek(new Date(), { weekStartsOn: 1 });
+          const currentWeek = getWeek(new Date('2026-05-10'), {
+            weekStartsOn: 1
+          });
+          console.log('currentWeek', currentWeek);
           const year = getYear(new Date(arrayDate));
           const currentYear = getYear(new Date());
 

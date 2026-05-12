@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useMemo, useState } from 'react';
+import React, { useContext, useMemo, useState } from 'react';
 import {
   Pressable,
   RefreshControl,
@@ -16,10 +16,9 @@ import {
 import Ticket from './content/Ticket';
 import CreateTicket from './components/CreateTicket';
 import { isArray } from 'lodash';
-import { TicketsProps } from './types';
 import sortTicketsForList from './functions/sortTicketsForList';
 
-const Tickets = ({ navigation }: TicketsProps) => {
+const Tickets = () => {
   const { themeColors, applicationStyles } = useContext(ThemeContext);
   const { user, isConnected } = useContext(AppContext);
   const [modalDataHasChanged, setModalDataHasChanged] = useState(false);
@@ -36,14 +35,6 @@ const Tickets = ({ navigation }: TicketsProps) => {
     await loadTickets({ userId: user.objectId });
     setRefreshing(false);
   };
-
-  useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', async () => {
-      loadTickets({ userId: user.objectId });
-    });
-
-    return navigation.removeListener('focus', unsubscribe);
-  }, [navigation, loadTickets, user.objectId]);
 
   const sectionTickets = useMemo(() => {
     return sortTicketsForList(tickets, properties);
@@ -108,7 +99,7 @@ const Tickets = ({ navigation }: TicketsProps) => {
           title="Neues Ticket erstellen"
         >
           <CreateTicket
-            refetch={() => loadTickets({ userId: user.objectId })}
+            refetch={() => handleRefresh()}
             modalDataHasChanged={modalDataHasChanged}
             setModalDataHasChanged={setModalDataHasChanged}
             closeModal={() => setIsVisible(false)}

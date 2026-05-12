@@ -122,6 +122,7 @@ const ProfileAbsence = ({ user }: { user: UserDisplayData }) => {
 
   const isDisabled = !record || !year || year.value < new Date().getFullYear();
 
+  console.log({ createAbsence });
   return (
     <>
       <View style={{ flex: 1 }}>

@@ -1,6 +1,7 @@
 import {
   AppContext,
   Button,
+  Divider,
   getDateObject,
   TextInput,
   ThemeContext,
@@ -219,7 +220,7 @@ const CreateVacation = ({
 
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1, paddingHorizontal: 12, paddingTop: 12 }}
+      style={{ paddingHorizontal: 12, paddingTop: 12 }}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView
@@ -295,7 +296,8 @@ const CreateVacation = ({
           ))}
         </View>
       </ScrollView>
-      <View style={{ height: 100 }}>
+      <View>
+        <Divider size="large" />
         <Button
           size="large"
           disabled={errors.length > 0 || loading}

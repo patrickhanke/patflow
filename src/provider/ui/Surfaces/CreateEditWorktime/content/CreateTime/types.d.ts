@@ -9,6 +9,7 @@ export type CreateTimeProps = {
   afterSaveHandler?: (success?: boolean) => void;
   dataHasChanged?: boolean;
   setDataHasChanged?: Dispatch<SetStateAction<boolean>>;
+  discardTimeHandler?: () => void;
 };
 
 export type WeekDayState = [

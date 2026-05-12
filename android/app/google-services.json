@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "641842391250",
+    "project_id": "hgs-app-d35b1",
+    "storage_bucket": "hgs-app-d35b1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:641842391250:android:9404a1d155b3829a01250b",
+        "android_client_info": {
+          "package_name": "com.hgs_app_mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAbRaLXhnSo7M80g4tjDx1kjopsgaR3uGw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

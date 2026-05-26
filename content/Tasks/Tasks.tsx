@@ -64,6 +64,8 @@ const Tasks = ({ route }: TasksProps) => {
       );
     }
 
+    console.log('tasksArray', tasks);
+
     const sectionTasks = sortTasksForList(tasksArray);
 
     const thisWeek: TaskSection = sectionTasks.filter(

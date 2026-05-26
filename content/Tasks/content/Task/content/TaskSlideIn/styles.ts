@@ -2,12 +2,13 @@ import { StyleSheet } from 'react-native';
 
 const styles = StyleSheet.create({
   slidein_container: {
-    paddingTop: 24,
-    paddingBottom: 24,
+    paddingTop: 6,
+    paddingBottom: 6,
     flexGrow: 1,
     flexDirection: 'column',
+    justifyContent: 'flex-start',
     alignItems: 'stretch',
-    gap: 18,
+    gap: 12,
     width: '100%'
   },
   slidein_header: {

@@ -107,7 +107,7 @@ const ProfileSettings = ({ user }: { user: UserDisplayData }) => {
   }
 
   const userDisplayData = data;
-  const version = '0.9.1';
+  const version = '0.9.2@beta1';
 
   return (
     <>

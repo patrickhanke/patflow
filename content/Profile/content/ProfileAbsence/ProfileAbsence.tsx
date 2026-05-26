@@ -110,8 +110,6 @@ const ProfileAbsence = ({ user }: { user: UserDisplayData }) => {
     return data;
   }, [record, days]);
 
-  console.log(vacationData);
-
   if (loading || absenceLoading) {
     return (
       <View style={applicationStyles.loading_container}>
@@ -122,7 +120,6 @@ const ProfileAbsence = ({ user }: { user: UserDisplayData }) => {
 
   const isDisabled = !record || !year || year.value < new Date().getFullYear();
 
-  console.log({ createAbsence });
   return (
     <>
       <View style={{ flex: 1 }}>
@@ -155,9 +152,15 @@ const ProfileAbsence = ({ user }: { user: UserDisplayData }) => {
           style={{ flex: 1 }}
           contentInsetAdjustmentBehavior="automatic"
         >
-          {absences.map((abs: Absence) => (
-            <AbsenceDisplay absence={abs} key={abs.objectId} />
-          ))}
+          {absences
+            .sort(
+              (a, b) =>
+                new Date(b.start_date).getTime() -
+                new Date(a.start_date).getTime()
+            )
+            .map((abs: Absence) => (
+              <AbsenceDisplay absence={abs} key={abs.objectId} />
+            ))}
         </ScrollView>
 
         <View

@@ -91,17 +91,15 @@ const TicketSlideIn = ({
     ]
   );
 
-  console.log({ ticket });
-
   return (
     <View style={styles.slidein_container}>
       <ScrollView
         style={{ flex: 1 }}
-        contentContainerStyle={{ padding: 12, gap: 12 }}
+        contentContainerStyle={{ paddingVertical: 6, gap: 12 }}
       >
         {/* Property Section */}
         <View style={applicationStyles.horizontal_container}>
-          <IconDisplay icon="building" color={themeColors.primary} size={21} />
+          <IconDisplay icon="building" color={themeColors.primary} size={18} />
           <View style={{ flex: 1 }}>
             <Text style={applicationStyles.text}>{ticket?.property?.name}</Text>
           </View>
@@ -110,7 +108,7 @@ const TicketSlideIn = ({
 
         {/* State Section */}
         <View style={applicationStyles.horizontal_container}>
-          <IconDisplay icon="state" color={themeColors.primary} size={21} />
+          <IconDisplay icon="state" color={themeColors.primary} size={18} />
           <View style={{ flex: 1 }}>
             <IconDisplay
               icon="state"
@@ -141,7 +139,7 @@ const TicketSlideIn = ({
               <IconDisplay
                 icon="document"
                 color={themeColors.primary}
-                size={21}
+                size={18}
               />
               <View style={{ flex: 1 }}>
                 <Text style={applicationStyles.text} selectable>
@@ -163,7 +161,7 @@ const TicketSlideIn = ({
               flex: 1
             }}
           >
-            <IconDisplay icon="image" color={themeColors.primary} size={21} />
+            <IconDisplay icon="image" color={themeColors.primary} size={18} />
             <View style={{ flex: 1, gap: 12 }}>
               <Text style={applicationStyles.text}>Bilder</Text>
             </View>

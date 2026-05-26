@@ -74,7 +74,7 @@ const CommentInterface = ({
             text={`Kommentare (${comments?.length || 0})`}
             icon="comment"
             size={18}
-            color={themeColors.text}
+            color={themeColors.primary}
             fontColor={themeColors.text}
           />
         )}

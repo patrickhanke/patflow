@@ -52,7 +52,7 @@ const TaskStatusRow = ({
 
   return (
     <View style={styles.status_row_container}>
-      {timeText && (
+      {time?.category?.value !== 'opportunity' && timeText && (
         <View style={iconRowStyle}>
           <IconDisplay icon="clock" size={15} color={dateColor} />
           <Text style={[applicationStyles.small_text, { color: dateColor }]}>

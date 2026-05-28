@@ -6,7 +6,6 @@ import { cloneDeep } from 'lodash';
 
 const sortTasksForList = (array: Array<Task>) => {
   const taskList: TaskSection = [];
-
   const arrayCopy = [...array];
 
   const sortedArray = arrayCopy.sort((a, b) => {
@@ -36,10 +35,9 @@ const sortTasksForList = (array: Array<Task>) => {
           const week = getWeek(new Date(arrayDate), {
             weekStartsOn: 1
           });
-          const currentWeek = getWeek(new Date('2026-05-10'), {
+          const currentWeek = getWeek(new Date(), {
             weekStartsOn: 1
           });
-          console.log('currentWeek', currentWeek);
           const year = getYear(new Date(arrayDate));
           const currentYear = getYear(new Date());
 
@@ -76,6 +74,11 @@ const sortTasksForList = (array: Array<Task>) => {
           } else if (weekDifference < 0) {
             titleDate = 'Überfällig';
             id = 'overdue';
+            date = arrayDate;
+          } else {
+            // Future opportunity tasks (more than 2 weeks away)
+            titleDate = getDateString(arrayDate);
+            id = 'future';
             date = arrayDate;
           }
         } else {
@@ -155,8 +158,6 @@ const sortTasksForList = (array: Array<Task>) => {
       });
     }
   }
-
-  console.log('taskList', taskList);
 
   const idOrder: Record<TaskSection[number]['id'], number> = {
     overdue: 0,

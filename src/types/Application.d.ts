@@ -1,11 +1,7 @@
 import { UserTypes } from '.';
 import { ObjectTypes, TaskTypes } from '../content';
 import { paramsHandler } from '@repo/provider';
-import {
-  ApolloClient,
-  ApolloQueryResult,
-  NormalizedCacheObject
-} from '@apollo/client';
+
 import { Filter } from '@repo/types';
 
 type type = 'find' | 'get';
@@ -29,16 +25,6 @@ export type ParamsHandlerType = (
   T: ParamsHandlerProps
 ) => ReturnType<typeof paramsHandler>;
 
-export type ApolloAppProviderProps = {
-  appId: string;
-  masterKey: string;
-  children: React.ReactNode;
-};
-
-export type makeClientProps = (
-  appId: string,
-  masterKey: string
-) => ApolloClient<NormalizedCacheObject>;
 
 export type Params = {
   object_id: string;
@@ -135,7 +121,5 @@ export type IndicatorElement = {
   error: string;
   success: string;
 };
-
-export type ApolloRefetch = () => Promise<ApolloQueryResult<any>>;
 
 export type Refetch = () => Promise<void>;

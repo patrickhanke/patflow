@@ -3,6 +3,7 @@ import { useCallback, useContext, useMemo, useState } from 'react';
 import useDataStore from './useDataStore';
 import { Class, QueryRestriction, UseFindDataParams } from './types';
 import {
+  Absence,
   Image,
   Property,
   Record as RecordType,
@@ -80,6 +81,7 @@ const useFindData = () => {
   const [propertiesLoading, setPropertiesLoading] = useState<boolean>(false);
   const [imagesLoading, setImagesLoading] = useState<boolean>(false);
   const [recordsLoading, setRecordsLoading] = useState<boolean>(false);
+  const [absencesLoading, setAbsencesLoading] = useState<boolean>(false);
 
   const loadImages = useCallback(
     async (imageIds: string[]): Promise<Image[]> => {
@@ -330,6 +332,8 @@ const useFindData = () => {
       const UserClass = Parse.Object.extend('_User');
       const userPointer = UserClass.createWithoutData(userId);
       const currentYear = new Date().getFullYear();
+      const currentYearArray = [currentYear, currentYear - 1];
+      console.log('currentYearArray', currentYearArray);
       const records = await loadData<RecordType>({
         className: 'Record',
         entry: 'records',
@@ -338,6 +342,7 @@ const useFindData = () => {
           'createdAt',
           'user',
           'absence',
+          'year',
           'default_times',
           'working_days',
           'start_date',
@@ -355,8 +360,8 @@ const useFindData = () => {
           },
           {
             key: 'year',
-            value: currentYear,
-            operator: 'equalTo'
+            value: currentYearArray,
+            operator: 'containedIn'
           }
         ],
         saveLocally: true
@@ -367,6 +372,50 @@ const useFindData = () => {
     [loadData, recordsLoading]
   );
 
+  const loadAbsences = useCallback(
+    async ({ userId }: { userId: string }): Promise<Absence[]> => {
+      if (absencesLoading) {
+        return [];
+      }
+      setAbsencesLoading(true);
+      const currentYear = new Date().getFullYear();
+      const currentYearArray = [currentYear, currentYear - 1];
+
+      const UserClass = Parse.Object.extend('_User');
+      const absences = await loadData<Absence>({
+        className: 'Absence',
+        entry: 'absences',
+        properties: [
+          'objectId',
+          'start_date',
+          'end_date',
+          'comment',
+          'state',
+          'user',
+          'type',
+          'year'
+        ],
+        restrictions: [
+          {
+            key: 'user',
+            value: UserClass.createWithoutData(userId),
+            operator: 'equalTo'
+          },
+          {
+            key: 'year',
+            value: currentYearArray,
+            operator: 'containedIn'
+          }
+        ],
+        saveLocally: true
+      });
+
+      setAbsencesLoading(false);
+      return absences;
+    },
+    [loadData, absencesLoading]
+  );
+
   return useMemo(
     () => ({
       loadData,
@@ -375,9 +424,18 @@ const useFindData = () => {
       loadProperties,
       loadTasks,
       handlePendingUploads,
-      loadRecords
+      loadRecords,
+      loadAbsences
     }),
-    [loadData, loadTickets, loadUsers, loadProperties, loadTasks, loadRecords]
+    [
+      loadData,
+      loadTickets,
+      loadUsers,
+      loadProperties,
+      loadTasks,
+      loadRecords,
+      loadAbsences
+    ]
   );
 };
 

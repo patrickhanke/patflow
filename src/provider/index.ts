@@ -1,4 +1,3 @@
-export * from './Apollo';
 export * from './queries';
 export * from './User';
 export * from './ui';

@@ -1,14 +1,15 @@
 import {
   Calendar,
   convertMillisecondsToString,
+  getCurrentRecord,
   months,
   SwitchButtons,
-  ThemeContext
+  ThemeContext,
+  useDataStore
 } from '@provider';
 import { Day, UserDisplayData } from '@types';
 import React, { useContext, useMemo, useState } from 'react';
-import { ActivityIndicator, Text, View } from 'react-native';
-import useGetRecords from './hooks/useGetRecords';
+import { Text, View } from 'react-native';
 import { MonthData, SelectedMonth } from './types';
 import styles from './styles';
 import createDateIntervalForMonth from './functions/createDateIntervalForMonth';
@@ -19,13 +20,12 @@ const ProfileTimes = ({ user }: { user: UserDisplayData }) => {
 
   const [days, setDays] = useState<Day[]>([]);
 
-  const { record, loading, records } = useGetRecords({
-    userId: user.objectId,
-    year: new Date().getFullYear(),
-    date: new Date().toISOString()
-  });
+  const records = useDataStore(store => store.records);
+
+  const record = getCurrentRecord(records, new Date().toISOString());
 
   console.log({ record });
+  console.log('record', JSON.stringify(record, null, 2));
 
   const [selectedMonth, setSelectedMonth] = useState<SelectedMonth>({
     id: new Date().getMonth(),
@@ -153,14 +153,6 @@ const ProfileTimes = ({ user }: { user: UserDisplayData }) => {
     }
     // Fallback to current month if not found
   }, [selectedMonth, monthData]);
-
-  if (loading) {
-    return (
-      <View style={applicationStyles.loading_container}>
-        <ActivityIndicator />
-      </View>
-    );
-  }
 
   return (
     <View style={{ flex: 1 }}>

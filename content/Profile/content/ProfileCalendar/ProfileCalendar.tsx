@@ -1,4 +1,4 @@
-import { eachDayOfInterval, formatISO9075 } from 'date-fns';
+import { formatISO9075, getDaysInMonth, getDay } from 'date-fns';
 import React, {
   useCallback,
   useContext,
@@ -7,54 +7,65 @@ import React, {
   useState
 } from 'react';
 import CalendarHeader from './content/CalendarHeader';
-import useCreateInterval from './hooks/useCreateInterval';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, Image, Text, View, ScrollView } from 'react-native';
 import styles from './styles';
-import { Absence, User } from '@types';
-import { ThemeContext, useParse } from '@provider';
-import CalendarDay from './content/CalendarDay';
-import { get, set } from 'lodash';
-import absence_type_options from '../ProfileAbsence/constants/absence_type_options';
-import { CalendarData } from './types';
+import { Day, User } from '@types';
+import { ThemeContext, useParse, getImageUrl } from '@provider';
+import weekdays from '@provider/constants/weekdays';
+
+type DayData = {
+  [userId: string]: {
+    [date: string]: Day[];
+  };
+};
 
 const ProfileCalendar = () => {
   const [intervalIndex, setIntervalIndex] = useState(new Date().getMonth());
   const { themeColors, applicationStyles } = useContext(ThemeContext);
   const { Parse, isReady } = useParse();
   const [loading, setLoading] = useState(false);
-  const [absences, setAbsences] = useState<Absence[]>([]);
+  const [days, setDays] = useState<Day[]>([]);
   const [staff, setStaff] = useState<User[]>([]);
 
   const year = new Date().getFullYear();
-  const interval = useCreateInterval();
 
   const loadData = useCallback(async () => {
     if (!isReady) return;
 
     setLoading(true);
     try {
-      // Load absences
-      const AbsenceClass = Parse.Object.extend('Absence');
-      const absenceQuery = new Parse.Query(AbsenceClass);
-      absenceQuery.equalTo('year', year);
+      // Load Days for the selected month
+      const DayClass = Parse.Object.extend('Day');
+      const dayQuery = new Parse.Query(DayClass);
+      dayQuery.limit(1000);
+      dayQuery.equalTo('year', year);
+      dayQuery.equalTo('month', intervalIndex);
+      dayQuery.select(['date', 'type', 'user']);
+      dayQuery.include('user');
 
-      const absenceResults = await absenceQuery.find();
-      setAbsences(absenceResults.map(r => r.toJSON() as Absence));
-
+      const dayResults = await dayQuery.find();
+      setDays(dayResults.map(r => r.toJSON() as unknown as Day));
       // Load staff
       const UserClass = Parse.Object.extend('_User');
       const staffQuery = new Parse.Query(UserClass);
+      staffQuery.select(
+        'objectId',
+        'first_name',
+        'last_name',
+        'portrait',
+        'color'
+      );
 
       const staffResults = await staffQuery.find();
-      setStaff(staffResults.map(r => r.toJSON() as User));
+      setStaff(staffResults.map(r => r.toJSON() as unknown as User));
     } catch (error) {
       console.error('Error loading data:', error);
-      setAbsences([]);
+      setDays([]);
       setStaff([]);
     } finally {
       setLoading(false);
     }
-  }, [isReady, Parse, year]);
+  }, [isReady, Parse, year, intervalIndex]);
 
   useEffect(() => {
     if (isReady) {
@@ -62,80 +73,170 @@ const ProfileCalendar = () => {
     }
   }, [isReady, loadData]);
 
-  const currentInterval: string[] = useMemo(() => {
-    let dayInterval: Date[] = [];
+  const daysInMonth = useMemo(() => {
+    return getDaysInMonth(new Date(year, intervalIndex));
+  }, [year, intervalIndex]);
 
-    const start = new Date(year, intervalIndex, 1);
-    const end = new Date(year, intervalIndex + 1, 0);
-    dayInterval = eachDayOfInterval(
-      {
-        start,
-        end
-      },
-      { step: 1 }
-    );
+  const dates = useMemo(() => {
+    const dateArray: Array<{
+      dateString: string;
+      dayNumber: number;
+      weekdayShort: string;
+      isWeekend: boolean;
+    }> = [];
+    for (let i = 1; i <= daysInMonth; i++) {
+      const date = new Date(year, intervalIndex, i);
+      const dayOfWeek = getDay(date);
+      const weekday = weekdays.find(wd => wd.iso_id === dayOfWeek);
+      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
 
-    return dayInterval.map(day =>
-      formatISO9075(day, { representation: 'date' })
-    );
-  }, [interval, intervalIndex, year]);
-
-  const calendarData = useMemo(() => {
-    const data: CalendarData = {};
-    if (staff.length === 0) {
-      return data;
+      dateArray.push({
+        dateString: formatISO9075(date, { representation: 'date' }),
+        dayNumber: i,
+        weekdayShort: weekday?.short || '',
+        isWeekend
+      });
     }
-    absences.forEach((absence: Absence) => {
-      if (absence.state === 'approved') {
-        const start = new Date(absence.start_date);
-        const end = new Date(absence.end_date);
-        const dayInterval = eachDayOfInterval(
-          {
-            start,
-            end
-          },
-          { step: 1 }
-        );
-        dayInterval
-          .map(day => formatISO9075(day, { representation: 'date' }))
-          .forEach((day, index) => {
-            const dayElement = get(data, day, undefined);
+    return dateArray;
+  }, [year, intervalIndex, daysInMonth]);
 
-            if (!dayElement) {
-              set(data, day, [
-                {
-                  ...absence,
-                  dataType: 'absence',
-                  dataColor: absence.user.color,
-                  dataLength: dayInterval.length,
-                  dataIndex: index,
-                  dataTitle: `${absence.user.first_name} ${absence.user.last_name} - ${absence_type_options.find(option => option.value === absence.type)?.label}`
-                }
-              ]);
-            } else {
-              data[day].push({
-                ...absence,
-                dataType: 'absence',
-                dataColor: absence.user.color,
-                dataLength: dayInterval.length,
-                dataIndex: index,
-                dataTitle: absence.type
-              });
-            }
-          });
+  const dayData = useMemo(() => {
+    const data: DayData = {};
+
+    days.forEach((day: Day) => {
+      const userId = day.user.objectId;
+      const date = day.date;
+
+      if (!data[userId]) {
+        data[userId] = {};
       }
+
+      if (!data[userId][date]) {
+        data[userId][date] = [];
+      }
+
+      data[userId][date].push(day);
     });
 
     return data;
-  }, [absences, staff]);
+  }, [days]);
 
-  if (loading) {
+  const renderUserAvatar = (user: User) => {
+    const getInitials = () => {
+      const firstInitial = user.first_name?.charAt(0)?.toUpperCase() || '';
+      const lastInitial = user.last_name?.charAt(0)?.toUpperCase() || '';
+      return `${firstInitial}${lastInitial}`;
+    };
+
+    const userColor =
+      user.color && user.color in themeColors
+        ? themeColors[user.color as keyof typeof themeColors]
+        : '#888';
+
+    if (!user.portrait) {
+      return (
+        <View
+          style={[
+            styles.avatar,
+            {
+              backgroundColor: userColor,
+              borderColor: themeColors.border
+            }
+          ]}
+        >
+          <Text style={styles.avatar_text}>{getInitials()}</Text>
+        </View>
+      );
+    }
+
     return (
-      <View style={applicationStyles.loading_container}>
-        <ActivityIndicator />
-      </View>
+      <Image
+        style={[styles.avatar, { borderColor: themeColors.border }]}
+        source={{
+          uri: getImageUrl({
+            fileName: user.portrait.name,
+            width: 40,
+            height: 40
+          })
+        }}
+      />
     );
-  }
+  };
+
+  const renderDaySquare = (
+    userId: string,
+    dateString: string,
+    isWeekend: boolean
+  ) => {
+    const userDays = dayData[userId]?.[dateString] || [];
+
+    if (userDays.length === 0) {
+      return (
+        <View
+          key={dateString}
+          style={[
+            styles.day_square,
+            {
+              backgroundColor: isWeekend
+                ? themeColors.disabled
+                : 'rgba(128, 128, 128, 0.1)'
+            }
+          ]}
+        />
+      );
+    }
+
+    const hasWork = userDays.some(d => d.type === 'work');
+    const hasAbsence = userDays.some(d => d.type === 'absence');
+
+    if (hasWork && hasAbsence) {
+      return (
+        <View
+          key={dateString}
+          style={[styles.day_square, { backgroundColor: 'transparent' }]}
+        >
+          <View
+            style={[styles.day_square_half, { backgroundColor: '#4CAF50' }]}
+          />
+          <View
+            style={[styles.day_square_half, { backgroundColor: '#FFC107' }]}
+          />
+        </View>
+      );
+    }
+
+    if (hasWork) {
+      return (
+        <View
+          key={dateString}
+          style={[styles.day_square, { backgroundColor: '#4CAF50' }]}
+        />
+      );
+    }
+
+    if (hasAbsence) {
+      return (
+        <View
+          key={dateString}
+          style={[styles.day_square, { backgroundColor: '#FFC107' }]}
+        />
+      );
+    }
+
+    return (
+      <View
+        key={dateString}
+        style={[
+          styles.day_square,
+          {
+            backgroundColor: isWeekend
+              ? themeColors.disabled
+              : 'rgba(128, 128, 128, 0.1)'
+          }
+        ]}
+      />
+    );
+  };
 
   return (
     <View style={{ flex: 1 }}>
@@ -144,27 +245,75 @@ const ProfileCalendar = () => {
           intervalIndex={intervalIndex}
           setIntervalIndex={setIntervalIndex}
         />
-        <View style={styles.calendar_container}>
-          {interval.length > 0 &&
-            interval[intervalIndex].map(week => (
-              <View
-                key={week.id}
-                style={[
-                  styles.days_container,
-                  { borderTopColor: themeColors.border }
-                ]}
-              >
-                {week.days.map((day: string) => (
-                  <CalendarDay
-                    key={day}
-                    day={day}
-                    currentInterval={currentInterval}
-                    data={calendarData[day] || []}
-                  />
-                ))}
+        {loading ? (
+          <View style={applicationStyles.loading_container}>
+            <ActivityIndicator />
+          </View>
+        ) : (
+          <View style={styles.calendar_container}>
+            <View style={styles.content_wrapper}>
+              <View style={styles.fixed_column}>
+                <View style={styles.user_column_header} />
+                <ScrollView showsVerticalScrollIndicator={false}>
+                  {staff.map(user => (
+                    <View key={user.objectId} style={styles.user_avatar_cell}>
+                      {renderUserAvatar(user)}
+                    </View>
+                  ))}
+                </ScrollView>
               </View>
-            ))}
-        </View>
+              <View style={styles.scrollable_column}>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={true}
+                  style={styles.horizontal_scroll}
+                >
+                  <View>
+                    <View style={styles.header_row}>
+                      <View style={styles.days_row}>
+                        {dates.map(date => (
+                          <View key={date.dateString} style={styles.day_header}>
+                            <Text
+                              style={[
+                                styles.day_header_text,
+                                { color: themeColors.text }
+                              ]}
+                            >
+                              {date.dayNumber}
+                            </Text>
+                            <Text
+                              style={[
+                                styles.day_header_weekday,
+                                { color: themeColors.text }
+                              ]}
+                            >
+                              {date.weekdayShort}
+                            </Text>
+                          </View>
+                        ))}
+                      </View>
+                    </View>
+                    <ScrollView showsVerticalScrollIndicator={true}>
+                      {staff.map(user => (
+                        <View key={user.objectId} style={styles.user_row}>
+                          <View style={styles.days_row}>
+                            {dates.map(date =>
+                              renderDaySquare(
+                                user.objectId,
+                                date.dateString,
+                                date.isWeekend
+                              )
+                            )}
+                          </View>
+                        </View>
+                      ))}
+                    </ScrollView>
+                  </View>
+                </ScrollView>
+              </View>
+            </View>
+          </View>
+        )}
       </View>
       <View style={applicationStyles.section_bottom_container} />
     </View>

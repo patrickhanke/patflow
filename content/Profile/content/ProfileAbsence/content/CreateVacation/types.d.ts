@@ -3,7 +3,6 @@ import { Dispatch, SetStateAction } from 'react';
 
 export type CreateVacationProps = {
   record: Record;
-  refetch: () => Promise<void>;
   setCreateTime: Dispatch<SetStateAction<boolean>>;
   dataHasChanged: boolean;
   setDataHasChanged: Dispatch<SetStateAction<boolean>>;

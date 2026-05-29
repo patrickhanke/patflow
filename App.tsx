@@ -47,7 +47,8 @@ import {
   PropertySubscription,
   RecordSubscription,
   TaskSubscription,
-  useNotificationIntentStore
+  useNotificationIntentStore,
+  AbsenceSubscription
 } from '@provider';
 import Fa5 from 'react-native-vector-icons/FontAwesome5';
 import Mat from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -163,6 +164,7 @@ function App(): React.JSX.Element {
                 if (!loading && !user) {
                   return <SignIn />;
                 }
+                console.log('loadApp');
 
                 return (
                   <>
@@ -334,6 +336,7 @@ function App(): React.JSX.Element {
                     <PropertySubscription />
                     <RecordSubscription />
                     <TaskSubscription />
+                    <AbsenceSubscription />
                   </>
                 );
               }}

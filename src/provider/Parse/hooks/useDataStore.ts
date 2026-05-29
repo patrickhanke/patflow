@@ -15,6 +15,7 @@ const useDataStore = create<DataStoreState>()(
       properties: [],
       images: [],
       records: [],
+      absences: [],
       currentRecord: null,
 
       // Manual data setters (for backwards compatibility)
@@ -37,6 +38,7 @@ const useDataStore = create<DataStoreState>()(
           properties: [],
           images: [],
           records: [],
+          absences: [],
           currentRecord: null
         }),
 
@@ -59,6 +61,9 @@ const useDataStore = create<DataStoreState>()(
       getRecordById: (id: string) =>
         get().records.find(record => record.objectId === id),
 
+      getAbsenceById: (id: string) =>
+        get().absences.find(absence => absence.objectId === id),
+
       getImagesByIds: (ids: string[]) =>
         get().images.filter(image => ids.includes(image.objectId)),
 
@@ -66,7 +71,9 @@ const useDataStore = create<DataStoreState>()(
         get().tasks.filter(task => task.property?.objectId === propertyId),
 
       getTicketsByPropertyId: (propertyId: string) =>
-        get().tickets.filter(ticket => ticket.property?.objectId === propertyId),
+        get().tickets.filter(
+          ticket => ticket.property?.objectId === propertyId
+        ),
 
       getTasksByUserId: (userId: string) =>
         get().tasks.filter(task => task.assigned_staff?.includes(userId))
@@ -81,6 +88,7 @@ const useDataStore = create<DataStoreState>()(
         properties: state.properties,
         images: state.images,
         records: state.records,
+        absences: state.absences,
         currentRecord: state.currentRecord
       })
     }

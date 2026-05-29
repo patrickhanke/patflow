@@ -124,6 +124,7 @@ export type Absence = {
   state: AbsenceStateOptions[number]['value'];
   user: UserDisplayData.objectId;
   type: 'illness' | 'vacation' | 'other';
+  year: number;
 };
 
 export type AbsenceStateOptions = [

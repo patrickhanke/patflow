@@ -39,8 +39,6 @@ const Calendar = ({
   const { Parse, isReady } = useParse();
   const [dayData, setDayData] = useState<Day[]>([]);
 
-  console.log('days', JSON.stringify(dayData, null, 2));
-
   // Memoize dateRange to prevent infinite loop - only recalculate when start/end change
   const dateRange = useMemo(() => getDateRange(start, end), [start, end]);
   const { holidays, filteredHolidays } = useGetHolidays({

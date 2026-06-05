@@ -162,7 +162,6 @@ export type Record = {
   user: User;
   absence: Absence[];
   default_times: TimeObject[];
-  working_days: Array<DayTime>;
   start_date: string;
   end_date: string;
   absence_days: number;

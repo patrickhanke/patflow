@@ -333,7 +333,6 @@ const useFindData = () => {
       const userPointer = UserClass.createWithoutData(userId);
       const currentYear = new Date().getFullYear();
       const currentYearArray = [currentYear, currentYear - 1];
-      console.log('currentYearArray', currentYearArray);
       const records = await loadData<RecordType>({
         className: 'Record',
         entry: 'records',
@@ -344,13 +343,13 @@ const useFindData = () => {
           'absence',
           'year',
           'default_times',
-          'working_days',
           'start_date',
           'end_date',
           'absence_days',
           'time_settings',
           'vacation',
-          'saldo'
+          'saldo',
+          'holiday_template'
         ],
         restrictions: [
           {

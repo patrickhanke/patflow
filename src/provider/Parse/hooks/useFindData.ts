@@ -286,41 +286,50 @@ const useFindData = () => {
 
   const loadTasks = useCallback(async (): Promise<Task[]> => {
     if (tasksLoading) {
+      console.log('[loadTasks] Already loading, skipping duplicate request');
       return [];
     }
+    console.log('[loadTasks] Starting fetch...');
+
     setTasksLoading(true);
 
-    const tasks = await loadData<Task>({
-      className: 'Task',
-      entry: 'tasks',
-      properties: [
-        'objectId',
-        'title',
-        'description',
-        'assigned_staff',
-        'dates',
-        'time',
-        'state',
-        'images',
-        'comments',
-        'documents',
-        'type',
-        'createdAt',
-        'property',
-        'ticket'
-      ],
-      restrictions: [
-        {
-          key: 'state',
-          value: 'assigned',
-          operator: 'equalTo'
-        }
-      ],
-      saveLocally: true
-    });
+    try {
+      const tasks = await loadData<Task>({
+        className: 'Task',
+        entry: 'tasks',
+        properties: [
+          'objectId',
+          'title',
+          'description',
+          'assigned_staff',
+          'dates',
+          'time',
+          'state',
+          'images',
+          'comments',
+          'documents',
+          'type',
+          'createdAt',
+          'property',
+          'ticket'
+        ],
+        restrictions: [
+          {
+            key: 'state',
+            value: 'assigned',
+            operator: 'equalTo'
+          }
+        ],
+        saveLocally: true
+      });
 
-    setTasksLoading(false);
-    return tasks;
+      setTasksLoading(false);
+      return tasks;
+    } catch (error) {
+      console.error('[loadTasks] Error:', error);
+      setTasksLoading(false);
+      return [];
+    }
   }, [loadData, tasksLoading]);
 
   const loadRecords = useCallback(

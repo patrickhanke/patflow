@@ -53,7 +53,7 @@ const Tasks = ({ route }: TasksProps) => {
   React.useEffect(() => {
     const intervalId = setInterval(() => {
       reloadDate();
-    }, 60000);
+    }, 600000);
 
     return () => clearInterval(intervalId);
   }, [reloadDate]);

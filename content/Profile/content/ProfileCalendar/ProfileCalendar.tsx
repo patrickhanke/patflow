@@ -7,7 +7,12 @@ import React, {
   useState
 } from 'react';
 import CalendarHeader from './content/CalendarHeader';
-import { ActivityIndicator, Image, Text, View, ScrollView } from 'react-native';
+import { ActivityIndicator, Image, Text, View } from 'react-native';
+import Animated, {
+  useAnimatedScrollHandler,
+  useSharedValue,
+  useAnimatedStyle
+} from 'react-native-reanimated';
 import styles from './styles';
 import { Day, User } from '@types';
 import { ThemeContext, useParse, getImageUrl } from '@provider';
@@ -27,7 +32,15 @@ const ProfileCalendar = () => {
   const [days, setDays] = useState<Day[]>([]);
   const [staff, setStaff] = useState<User[]>([]);
 
+  const scrollX = useSharedValue(0);
+
   const year = new Date().getFullYear();
+
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: event => {
+      scrollX.value = event.contentOffset.x;
+    }
+  });
 
   const loadData = useCallback(async () => {
     if (!isReady) return;
@@ -238,6 +251,32 @@ const ProfileCalendar = () => {
     );
   };
 
+  const AnimatedAvatar = ({ user }: { user: User }) => {
+    const animatedStyle = useAnimatedStyle(() => {
+      return {
+        transform: [{ translateX: scrollX.value }]
+      };
+    });
+
+    return (
+      <Animated.View
+        style={[
+          styles.avatar_sticky_container,
+          animatedStyle,
+          { backgroundColor: themeColors.light_background }
+        ]}
+      >
+        {renderUserAvatar(user)}
+      </Animated.View>
+    );
+  };
+
+  const headerAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ translateX: -scrollX.value }]
+    };
+  });
+
   return (
     <View style={{ flex: 1 }}>
       <View style={applicationStyles.section_container}>
@@ -251,67 +290,58 @@ const ProfileCalendar = () => {
           </View>
         ) : (
           <View style={styles.calendar_container}>
-            <View style={styles.content_wrapper}>
-              <View style={styles.fixed_column}>
-                <View style={styles.user_column_header} />
-                <ScrollView showsVerticalScrollIndicator={false}>
-                  {staff.map(user => (
-                    <View key={user.objectId} style={styles.user_avatar_cell}>
-                      {renderUserAvatar(user)}
+            <View style={styles.header_container}>
+              {/* <View style={styles.avatar_header_space} /> */}
+              <View style={styles.header_scroll_wrapper}>
+                <Animated.View style={[styles.days_row, headerAnimatedStyle]}>
+                  {dates.map(date => (
+                    <View key={date.dateString} style={styles.day_header}>
+                      <Text
+                        style={[
+                          styles.day_header_text,
+                          { color: themeColors.text }
+                        ]}
+                      >
+                        {date.dayNumber}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.day_header_weekday,
+                          { color: themeColors.text }
+                        ]}
+                      >
+                        {date.weekdayShort}
+                      </Text>
                     </View>
                   ))}
-                </ScrollView>
-              </View>
-              <View style={styles.scrollable_column}>
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={true}
-                  style={styles.horizontal_scroll}
-                >
-                  <View>
-                    <View style={styles.header_row}>
-                      <View style={styles.days_row}>
-                        {dates.map(date => (
-                          <View key={date.dateString} style={styles.day_header}>
-                            <Text
-                              style={[
-                                styles.day_header_text,
-                                { color: themeColors.text }
-                              ]}
-                            >
-                              {date.dayNumber}
-                            </Text>
-                            <Text
-                              style={[
-                                styles.day_header_weekday,
-                                { color: themeColors.text }
-                              ]}
-                            >
-                              {date.weekdayShort}
-                            </Text>
-                          </View>
-                        ))}
-                      </View>
-                    </View>
-                    <ScrollView showsVerticalScrollIndicator={true}>
-                      {staff.map(user => (
-                        <View key={user.objectId} style={styles.user_row}>
-                          <View style={styles.days_row}>
-                            {dates.map(date =>
-                              renderDaySquare(
-                                user.objectId,
-                                date.dateString,
-                                date.isWeekend
-                              )
-                            )}
-                          </View>
-                        </View>
-                      ))}
-                    </ScrollView>
-                  </View>
-                </ScrollView>
+                </Animated.View>
               </View>
             </View>
+            <Animated.ScrollView showsVerticalScrollIndicator={true}>
+              <Animated.ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={true}
+                onScroll={scrollHandler}
+                scrollEventThrottle={16}
+              >
+                <View>
+                  {staff.map(user => (
+                    <View key={user.objectId} style={styles.user_row_wrapper}>
+                      <AnimatedAvatar user={user} />
+                      <View style={styles.days_row}>
+                        {dates.map(date =>
+                          renderDaySquare(
+                            user.objectId,
+                            date.dateString,
+                            date.isWeekend
+                          )
+                        )}
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              </Animated.ScrollView>
+            </Animated.ScrollView>
           </View>
         )}
       </View>

@@ -6,6 +6,46 @@ const styles = StyleSheet.create({
     width: '100%',
     marginTop: 12
   },
+  header_container: {
+    paddingLeft: 60,
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    marginBottom: 8
+  },
+  header_scroll_wrapper: {
+    flex: 1,
+    overflow: 'hidden'
+  },
+  header_scroll_container: {
+    flexDirection: 'row',
+    flex: 1
+  },
+  user_row_wrapper: {
+    position: 'relative',
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 40,
+    marginBottom: 8,
+    paddingLeft: 64
+  },
+  avatar_sticky_container: {
+    position: 'absolute',
+    left: 0,
+    width: 60,
+    height: 40,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10
+  },
+  avatar_container: {
+    width: 56,
+    height: 40,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8
+  },
   content_wrapper: {
     flex: 1,
     flexDirection: 'row'
@@ -32,7 +72,7 @@ const styles = StyleSheet.create({
   },
   user_avatar_cell: {
     width: 56,
-    height: 40,
+    height: 60,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -61,7 +101,7 @@ const styles = StyleSheet.create({
   user_row: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 40,
+    height: 60,
     marginBottom: 8
   },
   avatar: {

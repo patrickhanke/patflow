@@ -349,16 +349,13 @@ const useFindData = () => {
           'objectId',
           'createdAt',
           'user',
-          'absence',
           'year',
           'default_times',
           'start_date',
           'end_date',
-          'absence_days',
           'time_settings',
           'vacation',
-          'saldo',
-          'holiday_template'
+          'saldo'
         ],
         restrictions: [
           {

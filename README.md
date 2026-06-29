@@ -1,97 +1,158 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# Patflow
 
-# Getting Started
+Patflow is a React Native mobile app for field and facility teams. It connects to a [Parse](https://parseplatform.org/) backend (hosted on [SashiDo](https://www.sashido.io/)) and gives staff a single place to manage tasks, tickets, work hours, and absences — with offline caching and push notifications.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+## Features
 
-## Step 1: Start Metro
+### Tasks (Aufgaben)
+- View and manage assigned work items, grouped by week
+- Create and edit tasks with staff assignment, dates, and descriptions
+- Admin view for users with elevated roles
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+### Tickets
+- Report and track issues tied to properties and locations
+- Filter and browse tickets with pull-to-refresh
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+### Time tracking (Arbeitszeiten)
+- Live timer for recording work sessions
+- Weekly calendar overview of recorded hours
+- Edit and review time entries
 
-```sh
-# Using npm
-npm start
+### Profile
+- **Abwesenheiten** — request and manage absences
+- **Arbeitszeiten** — personal time record history
+- **Urlaubskalender** — vacation calendar
+- **Profil** — account settings and cache management
 
-# OR using Yarn
-yarn start
+### Platform capabilities
+- Real-time data sync via Parse Live Queries and subscriptions
+- Offline support with SQLite-backed local caching
+- Push notifications via Firebase Cloud Messaging and Notifee
+- Connection status indicator and pending-update handling
+- Light and dark theme support
+
+## Tech stack
+
+| Layer | Technology |
+|-------|------------|
+| Framework | React Native 0.83, React 19 |
+| Language | TypeScript |
+| Navigation | React Navigation (bottom tabs) |
+| Backend | Parse SDK 8.x (SashiDo) |
+| State | Zustand (`useDataStore`) |
+| Storage | MMKV, Async Storage, Parse SQLite cache |
+| Notifications | Firebase Messaging, Notifee |
+| HTTP | Axios with retry |
+| Dates | date-fns |
+
+## Project structure
+
+```
+patflow/
+├── App.tsx                 # Root navigation, providers, subscriptions
+├── content/                # Screen-level UI (Tasks, Tickets, Profile, …)
+├── src/
+│   ├── provider/           # Shared logic, hooks, Parse integration, UI kit
+│   └── types/              # TypeScript type definitions
+├── android/                # Android native project
+├── ios/                    # iOS native project
+└── __tests__/              # Jest tests
 ```
 
-## Step 2: Build and run your app
+Path aliases (configured in `tsconfig.json` and `babel.config.js`):
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
+| Alias | Path |
+|-------|------|
+| `@provider` | `src/provider` |
+| `@types` | `src/types` |
+| `@content` | `content` |
 
-### Android
+## Prerequisites
+
+- [Node.js](https://nodejs.org/) 20.19.4 (see `engines` in `package.json`)
+- [React Native environment](https://reactnative.dev/docs/set-up-your-environment) for Android and/or iOS
+- Access to a SashiDo Parse app and a Firebase project (for push notifications)
+
+## Getting started
+
+### 1. Install dependencies
 
 ```sh
-# Using npm
+npm install
+```
+
+For iOS, install CocoaPods dependencies:
+
+```sh
+bundle install          # first time only
+bundle exec pod install # from the ios/ directory
+```
+
+### 2. Configure environment variables
+
+Create a `.env` file in the project root. Variables are loaded via [`react-native-dotenv`](https://github.com/goatandsheep/react-native-dotenv):
+
+```env
+SASHIDO_APP_ID=
+SASHIDO_JS_KEY=
+SASHIDO_REST_KEY=
+SASHIDO_MASTER_KEY=
+SASHIDO_SERVER_URL=
+SASHIDO_API_URL=
+SASHIDO_FILE_URL=
+FIREBASE_APP_ID=
+GCMS_SENDER_ID=
+```
+
+Obtain Parse credentials from your SashiDo dashboard. Firebase values come from your Firebase project settings.
+
+> **Note:** Never commit `.env` or other files containing secrets.
+
+### 3. Start Metro
+
+```sh
+npm start
+```
+
+### 4. Run the app
+
+```sh
+# Android
 npm run android
 
-# OR using Yarn
-yarn android
-```
-
-### iOS
-
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
-
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
-
-```sh
-bundle install
-```
-
-Then, and every time you update your native dependencies, run:
-
-```sh
-bundle exec pod install
-```
-
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
-
-```sh
-# Using npm
+# iOS
 npm run ios
-
-# OR using Yarn
-yarn ios
 ```
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+## Development
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+### Scripts
 
-## Step 3: Modify your app
+| Command | Description |
+|---------|-------------|
+| `npm start` | Start the Metro bundler |
+| `npm run android` | Build and run on Android |
+| `npm run ios` | Build and run on iOS |
+| `npm test` | Run Jest tests |
+| `npm run lint` | Run ESLint |
 
-Now that you have successfully run the app, let's make changes!
+### Data layer
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
+App data is fetched centrally and exposed through Zustand. Components read from `useDataStore` and trigger refetches via `useDataRefetch` or `useFindData`. See [QUICK_REFERENCE.md](./QUICK_REFERENCE.md) for common patterns.
 
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
+### Local cache
 
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
+Parse SDK caches data in SQLite on device. Cache limits, monitoring, and cleanup are documented in [README_DATABASE.md](./README_DATABASE.md).
 
-## Congratulations! :tada:
+## Additional documentation
 
-You've successfully run and modified your React Native App. :partying_face:
+| Document | Description |
+|----------|-------------|
+| [QUICK_REFERENCE.md](./QUICK_REFERENCE.md) | Centralized data fetching with `useDataStore` |
+| [README_DATABASE.md](./README_DATABASE.md) | SQLite cache management and monitoring |
+| [SQLITE_FULL_FIX.md](./SQLITE_FULL_FIX.md) | Handling database-full errors |
+| [USEFIND_HOOKS_UPDATE.md](./USEFIND_HOOKS_UPDATE.md) | `useFindData` hook patterns |
 
-### Now what?
+## License
 
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+Private project — all rights reserved.

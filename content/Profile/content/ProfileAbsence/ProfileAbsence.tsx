@@ -1,4 +1,4 @@
-import { Modal, ThemeContext, useParse } from '@provider';
+import { Modal, ThemeContext, useDataStore, useParse } from '@provider';
 import { Absence, Day, Record, UserDisplayData } from '@types';
 import React, {
   useCallback,
@@ -7,20 +7,12 @@ import React, {
   useMemo,
   useState
 } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  ScrollView,
-  Text,
-  View
-} from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import AbsenceDisplay from './components/AbsenceDisplay';
 import CreateVacation from './content/CreateVacation';
 import { Dropdown } from 'react-native-element-dropdown';
 import styles from './styles';
 import { YearOptions } from './types';
-import useFindRecords from './hooks/useFindRecords';
-import useGetAbsence from './hooks/useGetAbsence';
 import getRemainingVacation from './functions/getRemainingVacation';
 
 const ProfileAbsence = ({ user }: { user: UserDisplayData }) => {
@@ -30,13 +22,10 @@ const ProfileAbsence = ({ user }: { user: UserDisplayData }) => {
   const [record, setRecord] = useState<Record | null>(null);
   const [createAbsence, setCreateAbsence] = useState(false);
   const [dataHasChanged, setDataHasChanged] = useState(false);
+  const records = useDataStore(store => store.records);
+  const absences = useDataStore(store => store.absences);
 
   const [days, setDays] = useState<Day[]>([]);
-
-  const { records, loading } = useFindRecords({
-    userId: user.objectId,
-    year: new Date().getFullYear()
-  });
 
   const loadDays = useCallback(async () => {
     if (!isReady || !record) return;
@@ -69,7 +58,9 @@ const ProfileAbsence = ({ user }: { user: UserDisplayData }) => {
     const years: YearOptions = [];
     if (records.length > 0) {
       records.forEach(rc => {
-        years.push({ label: rc.year.toString(), value: rc.year });
+        if (rc.year) {
+          years.push({ label: rc.year.toString(), value: rc.year });
+        }
       });
     }
     return years.sort((a, b) => a.value - b.value);
@@ -78,15 +69,6 @@ const ProfileAbsence = ({ user }: { user: UserDisplayData }) => {
   const [year, setYear] = useState<YearOptions[number] | null>(
     yearOptions.find(y => y.value === new Date().getFullYear()) || null
   );
-
-  const {
-    absences,
-    loading: absenceLoading,
-    refetch: absenceRefetch
-  } = useGetAbsence({
-    userId: user.objectId,
-    year: new Date().getFullYear()
-  });
 
   useEffect(() => {
     if (!year && yearOptions.length > 0) {
@@ -110,19 +92,8 @@ const ProfileAbsence = ({ user }: { user: UserDisplayData }) => {
     return data;
   }, [record, days]);
 
-  console.log(vacationData);
-
-  if (loading || absenceLoading) {
-    return (
-      <View style={applicationStyles.loading_container}>
-        <ActivityIndicator />
-      </View>
-    );
-  }
-
   const isDisabled = !record || !year || year.value < new Date().getFullYear();
 
-  console.log({ createAbsence });
   return (
     <>
       <View style={{ flex: 1 }}>
@@ -155,9 +126,16 @@ const ProfileAbsence = ({ user }: { user: UserDisplayData }) => {
           style={{ flex: 1 }}
           contentInsetAdjustmentBehavior="automatic"
         >
-          {absences.map((abs: Absence) => (
-            <AbsenceDisplay absence={abs} key={abs.objectId} />
-          ))}
+          {absences
+            .filter(abs => abs?.year === year?.value)
+            .sort(
+              (a, b) =>
+                new Date(b.start_date).getTime() -
+                new Date(a.start_date).getTime()
+            )
+            .map((abs: Absence) => (
+              <AbsenceDisplay absence={abs} key={abs.objectId} />
+            ))}
         </ScrollView>
 
         <View
@@ -213,7 +191,6 @@ const ProfileAbsence = ({ user }: { user: UserDisplayData }) => {
         >
           <CreateVacation
             record={record}
-            refetch={absenceRefetch}
             dataHasChanged={dataHasChanged}
             setDataHasChanged={setDataHasChanged}
             setCreateTime={setCreateAbsence}

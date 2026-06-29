@@ -10,7 +10,6 @@ export type Pause = {
 }[];
 
 export type TimerProps = {
-  resetTimer: boolean;
   disabled: boolean;
 };
 

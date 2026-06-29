@@ -1,4 +1,4 @@
-import { ApolloRefetch, Day, Record } from '@types';
+import { Refetch, Day, Record } from '@types';
 
 export type GetRecordObject = {
   loading: boolean;
@@ -10,7 +10,7 @@ export type GetRecordObject = {
 export type TimeDisplayProps = {
   day: TimeDay;
   record: Record;
-  refetch: ApolloRefetch;
+  refetch: Refetch;
   dayObject?: Day;
 };
 

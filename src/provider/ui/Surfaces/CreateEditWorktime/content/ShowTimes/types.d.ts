@@ -1,13 +1,13 @@
-import { ApolloRefetch, Day } from '@types';
+import { Refetch, Day } from '@types';
 
 export type ShowTimesProps = {
   days: Day[];
-  refetch: ApolloRefetch;
+  refetch: Refetch;
   date: string;
   records: Record[];
 };
 
 export type TimeProps = {
   day: Day;
-  refetch: ApolloRefetch;
+  refetch: Refetch;
 };

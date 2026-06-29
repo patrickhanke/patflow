@@ -27,7 +27,7 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     paddingHorizontal: 12,
-    paddingVertical: 18,
+    paddingVertical: 12,
     flexBasis: 240,
     flexGrow: 1,
     flexShrink: 0.5

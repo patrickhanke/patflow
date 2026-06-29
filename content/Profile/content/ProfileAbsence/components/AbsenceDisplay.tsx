@@ -9,7 +9,6 @@ import styles from '../styles';
 
 const AbsenceDisplay = ({ absence }: { absence: Absence }) => {
   const { themeColors, applicationStyles } = useContext(ThemeContext);
-  console.log(absence);
 
   return (
     <View style={applicationStyles.section_element_container}>

@@ -27,7 +27,6 @@ import { isEqual } from 'lodash';
 
 const CreateVacation = ({
   record,
-  refetch,
   setCreateTime,
   dataHasChanged,
   setDataHasChanged
@@ -204,7 +203,6 @@ const CreateVacation = ({
         }
       });
     }
-    await refetch();
     setLoading(false);
     setCreateTime(false);
   }, [absenceState, record, user]);

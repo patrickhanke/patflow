@@ -42,13 +42,21 @@ const Tasks = ({ route }: TasksProps) => {
 
   const reloadDate = React.useCallback(() => {
     const now = new Date();
-    const weekKey = `${getYear(now)}-${getWeek(new Date('2026-05-10'), { weekStartsOn: 1 })}`;
+    const weekKey = `${getYear(now)}-${getWeek(now, { weekStartsOn: 1 })}`;
     if (weekKey !== currentWeekKey) {
       setCurrentWeekKey(weekKey);
     }
   }, [currentWeekKey]);
 
   useFocusEffect(reloadDate);
+
+  React.useEffect(() => {
+    const intervalId = setInterval(() => {
+      reloadDate();
+    }, 600000);
+
+    return () => clearInterval(intervalId);
+  }, [reloadDate]);
 
   const sectionTasksByWeek: TaskSectionObject = useMemo(() => {
     let tasksArray = tasks;

@@ -15,7 +15,8 @@ import {
   UserDisplay,
   IconButton,
   useDataHandler,
-  getDateObject
+  getDateObject,
+  useDataStore
 } from '@provider';
 import styles from './styles';
 import { Asset } from 'react-native-image-picker';
@@ -45,6 +46,7 @@ const TaskSlideIn = ({
   const [isVisible, setIsVisible] = useState(false);
   const { saveImages } = useSaveImages({ isConnected });
   const { updateData } = useDataHandler();
+  const properties = useDataStore(state => state.properties);
 
   const addImagesHandler = useCallback(
     async (images: Asset[]) => {
@@ -131,7 +133,7 @@ const TaskSlideIn = ({
         >
           {/* Title Section */}
           <View style={applicationStyles.horizontal_container}>
-            <IconDisplay icon="text" color={themeColors.border} size={21} />
+            <IconDisplay icon="text" color={themeColors.primary} size={18} />
             <View style={{ flex: 1 }}>
               {/* <Text style={applicationStyles.small_header}>Titel</Text> */}
               <Text style={applicationStyles.text} selectable>
@@ -143,7 +145,11 @@ const TaskSlideIn = ({
 
           {/* Due Date Section */}
           <View style={applicationStyles.horizontal_container}>
-            <IconDisplay icon="calendar" color={themeColors.border} size={21} />
+            <IconDisplay
+              icon="calendar"
+              color={themeColors.primary}
+              size={18}
+            />
             <View style={{ flex: 1 }}>
               <Text style={applicationStyles.text}>{dueDateInfo.text}</Text>
             </View>
@@ -152,10 +158,18 @@ const TaskSlideIn = ({
 
           {/* Property/Object Section */}
           <View style={applicationStyles.horizontal_container}>
-            <IconDisplay icon="building" color={themeColors.border} size={21} />
+            <IconDisplay
+              icon="building"
+              color={themeColors.primary}
+              size={18}
+            />
             <View style={{ flex: 1 }}>
               {/* <Text style={applicationStyles.small_header}>Objekt</Text> */}
-              <Text style={applicationStyles.text}>{task?.property?.name}</Text>
+              <Text style={applicationStyles.text}>
+                {properties.find(
+                  property => property.objectId === task?.property?.objectId
+                )?.name || '-'}
+              </Text>
             </View>
           </View>
 
@@ -178,8 +192,8 @@ const TaskSlideIn = ({
               >
                 <IconDisplay
                   icon="document"
-                  color={themeColors.border}
-                  size={21}
+                  color={themeColors.primary}
+                  size={18}
                 />
                 <View style={{ flex: 1 }}>
                   {/* <Text style={applicationStyles.small_header}>
@@ -201,7 +215,7 @@ const TaskSlideIn = ({
               { alignItems: 'flex-start' }
             ]}
           >
-            <IconDisplay icon="people" color={themeColors.border} size={21} />
+            <IconDisplay icon="people" color={themeColors.primary} size={18} />
             <View style={{ flex: 1 }}>
               <ScrollView
                 style={{ flex: 1 }}
@@ -248,7 +262,7 @@ const TaskSlideIn = ({
                 flex: 1
               }}
             >
-              <IconDisplay icon="image" color={themeColors.border} size={21} />
+              <IconDisplay icon="image" color={themeColors.primary} size={18} />
               <View style={{ flex: 1 }}>
                 <View style={applicationStyles.horizontal_container}>
                   <Text style={applicationStyles.small_header}>Bilder</Text>

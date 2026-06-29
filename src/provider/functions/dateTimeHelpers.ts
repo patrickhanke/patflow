@@ -74,9 +74,9 @@ export const getWeekDayKeys: (
 };
 
 export const getStringFromDate = (date: Date): string => {
-  if (!date) {
-    return `${formatISO9075(new Date(date), { representation: 'date' })}T${formatISO9075(new Date(date), { representation: 'time' })}`;
-  } else {
+  if (date) {
     return `${formatISO9075(date, { representation: 'date' })}T${formatISO9075(date, { representation: 'time' })}`;
+  } else {
+    throw new Error('getStringFromDate called with null or undefined date');
   }
 };

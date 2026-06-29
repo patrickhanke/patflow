@@ -10,7 +10,7 @@ export type TimeRecordsProps = {
 export type FindRecordsObject = {
   loading: boolean;
   record: Record;
-  refetch: ApolloRefetch;
+  refetch: Refetch;
 };
 
 export type GetRecordObject = {
@@ -48,5 +48,5 @@ export type WeekDateObject = {
 export type GetRecordObject = {
   loading: boolean;
   record: Record;
-  refetch: ApolloRefetch;
+  refetch: Refetch;
 };

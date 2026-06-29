@@ -1,4 +1,12 @@
-import { Image, Property, Record, Task, Ticket, User } from '@types';
+import {
+  Absence,
+  Image,
+  Property,
+  Record,
+  Task,
+  Ticket,
+  User
+} from '@types';
 
 export type ImageFile = {
   objectId: string;
@@ -21,6 +29,7 @@ interface DataStoreState {
   properties: Property[];
   images: ImageFile[];
   records: Record[];
+  absences: Absence[];
   currentRecord: Record | null;
   setData: (data: Class[], entry: DataStoreEntry) => void;
   clearAll: () => void;
@@ -30,6 +39,7 @@ interface DataStoreState {
   getPropertyById: (id: string) => Property | undefined;
   getImageById: (id: string) => ImageFile | undefined;
   getRecordById: (id: string) => Record | undefined;
+  getAbsenceById: (id: string) => Absence | undefined;
   getImagesByIds: (ids: string[]) => ImageFile[];
   getTasksByPropertyId: (propertyId: string) => Task[];
   getTicketsByPropertyId: (propertyId: string) => Ticket[];
@@ -43,7 +53,8 @@ export type DataStoreEntry =
   | 'tickets'
   | 'properties'
   | 'images'
-  | 'records';
+  | 'records'
+  | 'absences';
 
 /** Parse query operators supported by the hook */
 export type QueryOperator =
@@ -78,4 +89,11 @@ export type UseFindDataParams = {
   saveLocally?: boolean;
 };
 
-export type Class = Task | Ticket | User | Property | Image | Record;
+export type Class =
+  | Task
+  | Ticket
+  | User
+  | Property
+  | Image
+  | Record
+  | Absence;

@@ -1,7 +1,13 @@
 import React, { useCallback, useContext, useMemo, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { TaskProps } from './types';
-import { Avatar, GlobalModal, ThemeContext, useDataHandler } from '@provider';
+import {
+  Avatar,
+  GlobalModal,
+  ThemeContext,
+  useDataHandler,
+  useDataStore
+} from '@provider';
 import { TaskSlideIn } from './content';
 import styles from './styles';
 import { cloneDeep } from 'lodash';
@@ -12,6 +18,7 @@ const Task = ({ task, refetch, isAdmin = false, isLast }: TaskProps) => {
   const { updateData } = useDataHandler();
   const { applicationStyles, themeColors } = useContext(ThemeContext);
   const [isVisible, setIsVisible] = useState(false);
+  const properties = useDataStore(state => state.properties);
 
   const completeTask = useCallback(async () => {
     const taskDatesCopy = cloneDeep(task.dates);
@@ -123,7 +130,9 @@ const Task = ({ task, refetch, isAdmin = false, isLast }: TaskProps) => {
                 {task?.title}
               </Text>
               <Text style={[styles.task_property, { color: themeColors.text }]}>
-                {task?.property?.name || '-'}
+                {properties.find(
+                  property => property.objectId === task?.property?.objectId
+                )?.name || '-'}
               </Text>
             </View>
           </View>

@@ -3,6 +3,7 @@ import { useCallback, useContext, useMemo, useState } from 'react';
 import useDataStore from './useDataStore';
 import { Class, QueryRestriction, UseFindDataParams } from './types';
 import {
+  Absence,
   Image,
   Property,
   Record as RecordType,
@@ -80,6 +81,7 @@ const useFindData = () => {
   const [propertiesLoading, setPropertiesLoading] = useState<boolean>(false);
   const [imagesLoading, setImagesLoading] = useState<boolean>(false);
   const [recordsLoading, setRecordsLoading] = useState<boolean>(false);
+  const [absencesLoading, setAbsencesLoading] = useState<boolean>(false);
 
   const loadImages = useCallback(
     async (imageIds: string[]): Promise<Image[]> => {
@@ -114,20 +116,25 @@ const useFindData = () => {
       properties,
       limit = 500,
       sortBy = 'createdAt',
-      sortOrder = 'descending',
-      saveLocally = false
+      sortOrder = 'descending'
     }: UseFindDataParams): Promise<T[]> => {
       if (!isReady) {
         return [];
       }
-      let returnData: T[] = [];
-      // await Parse.Object.unPinAllObjects();
+
+      const pendingUploads = await getPendingUploadKeys();
+      console.log('pendingUploads', JSON.stringify(pendingUploads, null, 2));
+
+      if (!isConnected) {
+        console.log(
+          `[useFindData] Offline: returning cached data from Zustand for ${className}`
+        );
+        return [];
+      }
+
       try {
         const ParseClass = Parse.Object.extend(className);
         const query = new Parse.Query(ParseClass);
-
-        const pendingUploads = await getPendingUploadKeys();
-        console.log('pendingUploads', JSON.stringify(pendingUploads, null, 2));
 
         for (const r of restrictions) {
           applyRestriction(query, r, Parse);
@@ -136,11 +143,9 @@ const useFindData = () => {
         query[sortOrder === 'descending' ? 'descending' : 'ascending'](sortBy);
         query.limit(limit);
 
-        query.fromPinWithName(entry as string);
-
         const results = await query.find();
         console.log(
-          `loaded ${results.length} ${className} from local datastore`
+          `[useFindData] Loaded ${results.length} ${className} from server`
         );
 
         let data = results.map((obj: Parse.Object) => {
@@ -158,112 +163,34 @@ const useFindData = () => {
           return full as unknown as T;
         });
 
+        if (className === 'Image' && RNFS) {
+          await createLocalImageFile({ results, data });
+        }
+
         if (entry) {
           console.log(
-            `setting ${data.length} ${className} to store for ${entry}`
+            `[useFindData] Setting ${data.length} ${className} to Zustand store for ${entry}`
           );
           setData(data, entry);
         }
 
-        returnData = data;
+        if (results.length > 0 && properties?.includes('images')) {
+          const imageIds = results.flatMap(r => r.get('images') ?? []);
+          if (imageIds.length > 0) {
+            await loadImages(imageIds as string[]);
+          }
+        }
+
+        return data;
       } catch (error) {
         console.error(
-          `[useFindData] Error loading ${className} from local datastore:`,
+          `[useFindData] Error loading ${className} from server:`,
           error
         );
         return [];
       }
-
-      if (isConnected) {
-        try {
-          // load data from remote datastore
-          const ParseClass = Parse.Object.extend(className);
-          const query = new Parse.Query(ParseClass);
-
-          for (const r of restrictions) {
-            applyRestriction(query, r, Parse);
-          }
-          query[sortOrder === 'descending' ? 'descending' : 'ascending'](
-            sortBy
-          );
-          query.limit(limit);
-
-          const results = await query.find();
-
-          console.log('loaded results from remote datastore', results);
-          console.log(saveLocally ? 'saving locally' : 'not saving locally');
-
-          // map results to data object
-          let data = results.map((obj: Parse.Object) => {
-            const full = obj.toJSON() as Record<string, unknown>;
-            if (properties && properties.length > 0) {
-              const filtered = Object.fromEntries(
-                Object.entries(full).filter(
-                  ([k]) =>
-                    properties.includes(k) ||
-                    (className === 'Image' && k === 'local_url')
-                )
-              ) as Record<string, unknown>;
-              return filtered as unknown as T;
-            }
-            return full as unknown as T;
-          });
-
-          // download image and add local_url to data
-          if (className === 'Image' && isConnected && RNFS) {
-            await createLocalImageFile({ results, data });
-          }
-          console.log('isConnected', isConnected);
-          // pin results
-          if (isConnected && saveLocally) {
-            await Parse.Object.unPinAllObjectsWithName(entry as string)
-              .then(() => {
-                console.log('unpinned all objects with name', entry);
-              })
-              .catch(error => {
-                console.error('error unpinning all objects with name', error);
-              });
-            await Parse.Object.pinAllWithName(entry as string, results)
-              .then(() => {
-                console.log(
-                  `pinned ${results.length} objects with name ${entry}`
-                );
-              })
-              .catch(error => {
-                console.error('error pinning all objects with name', error);
-              });
-          } else {
-            console.log(
-              'pinning omitted because not connected or saveLocally is disabled'
-            );
-          }
-
-          // set data to store
-          if (entry) {
-            setData(data, entry);
-          }
-
-          // load images if they are in the properties
-          if (results.length > 0 && properties?.includes('images')) {
-            const imageIds = results.flatMap(r => r.get('images') ?? []);
-            if (imageIds.length > 0) {
-              await loadImages(imageIds as string[]);
-            }
-          }
-
-          returnData = data;
-
-          // Save pending uploads
-        } catch (error) {
-          console.error(
-            `[useFindData] Error loading ${className} from remote datastore:`,
-            error
-          );
-        }
-      }
-      return returnData;
     },
-    [Parse, isReady, isConnected]
+    [Parse, isReady, isConnected, setData, loadImages]
   );
 
   const handlePendingUploads = useCallback(async () => {
@@ -359,41 +286,50 @@ const useFindData = () => {
 
   const loadTasks = useCallback(async (): Promise<Task[]> => {
     if (tasksLoading) {
+      console.log('[loadTasks] Already loading, skipping duplicate request');
       return [];
     }
+    console.log('[loadTasks] Starting fetch...');
+
     setTasksLoading(true);
 
-    const tasks = await loadData<Task>({
-      className: 'Task',
-      entry: 'tasks',
-      properties: [
-        'objectId',
-        'title',
-        'description',
-        'assigned_staff',
-        'dates',
-        'time',
-        'state',
-        'images',
-        'comments',
-        'documents',
-        'type',
-        'createdAt',
-        'property',
-        'ticket'
-      ],
-      restrictions: [
-        {
-          key: 'state',
-          value: 'assigned',
-          operator: 'equalTo'
-        }
-      ],
-      saveLocally: true
-    });
+    try {
+      const tasks = await loadData<Task>({
+        className: 'Task',
+        entry: 'tasks',
+        properties: [
+          'objectId',
+          'title',
+          'description',
+          'assigned_staff',
+          'dates',
+          'time',
+          'state',
+          'images',
+          'comments',
+          'documents',
+          'type',
+          'createdAt',
+          'property',
+          'ticket'
+        ],
+        restrictions: [
+          {
+            key: 'state',
+            value: 'assigned',
+            operator: 'equalTo'
+          }
+        ],
+        saveLocally: true
+      });
 
-    setTasksLoading(false);
-    return tasks;
+      setTasksLoading(false);
+      return tasks;
+    } catch (error) {
+      console.error('[loadTasks] Error:', error);
+      setTasksLoading(false);
+      return [];
+    }
   }, [loadData, tasksLoading]);
 
   const loadRecords = useCallback(
@@ -405,6 +341,7 @@ const useFindData = () => {
       const UserClass = Parse.Object.extend('_User');
       const userPointer = UserClass.createWithoutData(userId);
       const currentYear = new Date().getFullYear();
+      const currentYearArray = [currentYear, currentYear - 1];
       const records = await loadData<RecordType>({
         className: 'Record',
         entry: 'records',
@@ -412,12 +349,10 @@ const useFindData = () => {
           'objectId',
           'createdAt',
           'user',
-          'absence',
+          'year',
           'default_times',
-          'working_days',
           'start_date',
           'end_date',
-          'absence_days',
           'time_settings',
           'vacation',
           'saldo'
@@ -430,8 +365,8 @@ const useFindData = () => {
           },
           {
             key: 'year',
-            value: currentYear,
-            operator: 'equalTo'
+            value: currentYearArray,
+            operator: 'containedIn'
           }
         ],
         saveLocally: true
@@ -442,6 +377,50 @@ const useFindData = () => {
     [loadData, recordsLoading]
   );
 
+  const loadAbsences = useCallback(
+    async ({ userId }: { userId: string }): Promise<Absence[]> => {
+      if (absencesLoading) {
+        return [];
+      }
+      setAbsencesLoading(true);
+      const currentYear = new Date().getFullYear();
+      const currentYearArray = [currentYear, currentYear - 1];
+
+      const UserClass = Parse.Object.extend('_User');
+      const absences = await loadData<Absence>({
+        className: 'Absence',
+        entry: 'absences',
+        properties: [
+          'objectId',
+          'start_date',
+          'end_date',
+          'comment',
+          'state',
+          'user',
+          'type',
+          'year'
+        ],
+        restrictions: [
+          {
+            key: 'user',
+            value: UserClass.createWithoutData(userId),
+            operator: 'equalTo'
+          },
+          {
+            key: 'year',
+            value: currentYearArray,
+            operator: 'containedIn'
+          }
+        ],
+        saveLocally: true
+      });
+
+      setAbsencesLoading(false);
+      return absences;
+    },
+    [loadData, absencesLoading]
+  );
+
   return useMemo(
     () => ({
       loadData,
@@ -450,9 +429,18 @@ const useFindData = () => {
       loadProperties,
       loadTasks,
       handlePendingUploads,
-      loadRecords
+      loadRecords,
+      loadAbsences
     }),
-    [loadData, loadTickets, loadUsers, loadProperties, loadTasks, loadRecords]
+    [
+      loadData,
+      loadTickets,
+      loadUsers,
+      loadProperties,
+      loadTasks,
+      loadRecords,
+      loadAbsences
+    ]
   );
 };
 

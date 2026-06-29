@@ -34,22 +34,31 @@ const TimeRecords = () => {
   });
   const { currentRecord } = useDataStore();
 
-  useEffect(() => {
-    const newCurrentWeek = getWeek(new Date(), { weekStartsOn: 1 });
+  const updateWeekData = React.useCallback(() => {
+    const now = new Date();
+    const newCurrentWeek = getWeek(now, { weekStartsOn: 1 });
+    const weekKey = `${getYear(now)}-${newCurrentWeek}`;
     if (newCurrentWeek !== currentWeek) {
       setCurrentWeek(newCurrentWeek);
     }
-  }, [currentWeek]);
+    if (weekKey !== currentWeekKey) {
+      setCurrentWeekKey(weekKey);
+    }
+  }, [currentWeek, currentWeekKey]);
 
-  useFocusEffect(
-    React.useCallback(() => {
-      const now = new Date();
-      const weekKey = `${getYear(now)}-${getWeek(now, { weekStartsOn: 1 })}`;
-      if (weekKey !== currentWeekKey) {
-        setCurrentWeekKey(weekKey);
-      }
-    }, [currentWeekKey])
-  );
+  useEffect(() => {
+    updateWeekData();
+  }, []);
+
+  useFocusEffect(updateWeekData);
+
+  React.useEffect(() => {
+    const intervalId = setInterval(() => {
+      updateWeekData();
+    }, 60000);
+
+    return () => clearInterval(intervalId);
+  }, [updateWeekData]);
 
   const weeks = useMemo(() => {
     const week = currentWeek;

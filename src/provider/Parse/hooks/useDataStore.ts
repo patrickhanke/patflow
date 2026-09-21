@@ -5,6 +5,26 @@ import { Class, DataStoreEntry, DataStoreState } from './types';
 import getCurrentRecord from '../../functions/getCurrentRecord';
 import { Record } from '@types';
 
+type StoreRecord = { objectId: string };
+
+const isStoreRecord = (item: unknown): item is StoreRecord => {
+  if (!item || typeof item !== 'object' || !('objectId' in item)) {
+    return false;
+  }
+  return typeof (item as { objectId?: unknown }).objectId === 'string';
+};
+
+const getCollection = (
+  state: DataStoreState,
+  entry: DataStoreEntry
+): StoreRecord[] => {
+  if (entry === 'adminTasks') {
+    return [];
+  }
+  const value = state[entry as keyof DataStoreState];
+  return Array.isArray(value) ? value.filter(isStoreRecord) : [];
+};
+
 const useDataStore = create<DataStoreState>()(
   persist(
     (set, get) => ({
@@ -25,6 +45,37 @@ const useDataStore = create<DataStoreState>()(
           if (entry === 'records') {
             const records = data as Record[];
             updates.currentRecord = getCurrentRecord(records) ?? null;
+          }
+          return updates;
+        }),
+
+      upsertData: (data: Class[], entry: DataStoreEntry) =>
+        set(state => {
+          const current = getCollection(state, entry);
+          const byId = new Map(current.map(item => [item.objectId, item]));
+          data.forEach(item => {
+            if (!isStoreRecord(item)) {
+              return;
+            }
+            const existing = byId.get(item.objectId);
+            byId.set(item.objectId, existing ? { ...existing, ...item } : item);
+          });
+          const next = Array.from(byId.values());
+          const updates = { [entry]: next } as Partial<DataStoreState>;
+          if (entry === 'records') {
+            updates.currentRecord = getCurrentRecord(next as Record[]) ?? null;
+          }
+          return updates;
+        }),
+
+      removeData: (ids: string[], entry: DataStoreEntry) =>
+        set(state => {
+          const current = getCollection(state, entry);
+          const idSet = new Set(ids);
+          const next = current.filter(item => !idSet.has(item.objectId));
+          const updates = { [entry]: next } as Partial<DataStoreState>;
+          if (entry === 'records') {
+            updates.currentRecord = getCurrentRecord(next as Record[]) ?? null;
           }
           return updates;
         }),

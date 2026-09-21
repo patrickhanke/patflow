@@ -16,7 +16,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 type RootTabParamList = {
   Aufgaben: { admin?: boolean };
   Tickets: undefined;
-  Arbeiteszeiten: undefined;
+  Arbeitszeiten: undefined;
   Profil: undefined;
   Admin: { admin?: boolean };
 };
@@ -43,12 +43,8 @@ import {
   AxiosProvider,
   initializeParse,
   ParseProvider,
-  UserSubscription,
-  PropertySubscription,
-  RecordSubscription,
   TaskSubscription,
-  useNotificationIntentStore,
-  AbsenceSubscription
+  useNotificationIntentStore
 } from '@provider';
 import Fa5 from 'react-native-vector-icons/FontAwesome5';
 import Mat from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -62,6 +58,7 @@ import { getWeek } from 'date-fns';
 
 import messaging from '@react-native-firebase/messaging';
 import notifee, { EventType } from '@notifee/react-native';
+import { intersection } from 'lodash';
 
 // Background FCM + notifee handlers are registered in `index.js` via
 // `src/provider/gcm/backgroundMessageHandler.ts` so they fire when the app is
@@ -145,7 +142,7 @@ function App(): React.JSX.Element {
 
   const getColors = colors[colorScheme as 'dark' | 'light'];
 
-  const adminRoles: string[] = ['YbZv7RA1Rp', '0ljodoihj9'];
+  const adminRoles: string[] = ['KzegQ29LiI', '1oarmHzMxv'];
 
   if (!parseInitialized) {
     return <Start />;
@@ -165,6 +162,7 @@ function App(): React.JSX.Element {
                   return <SignIn />;
                 }
                 console.log('loadApp');
+                console.log('user', user);
 
                 return (
                   <>
@@ -268,10 +266,10 @@ function App(): React.JSX.Element {
                           }}
                         />
                         <Tab.Screen
-                          name="Arbeiteszeiten"
+                          name="Arbeitszeiten"
                           component={TimeRecords}
                           options={{
-                            title: 'Arbeiteszeiten',
+                            title: 'Arbeitszeiten',
                             tabBarLabel: 'Zeiten',
                             tabBarIcon: ({ focused }) => (
                               <Text>
@@ -305,7 +303,7 @@ function App(): React.JSX.Element {
                             )
                           }}
                         />
-                        {adminRoles.includes(user.role.objectId) && (
+                        {intersection(adminRoles, user?.roles) && (
                           <Tab.Screen
                             name="Admin"
                             component={Tasks}
@@ -332,11 +330,7 @@ function App(): React.JSX.Element {
                       </Tab.Navigator>
                     </NavigationContainer>
                     <PendingUpdates isConnected={isConnected} />
-                    <UserSubscription />
-                    <PropertySubscription />
-                    <RecordSubscription />
                     <TaskSubscription />
-                    <AbsenceSubscription />
                   </>
                 );
               }}

@@ -1,28 +1,22 @@
-import {
-  Absence,
-  Image,
-  Property,
-  Record,
-  Task,
-  Ticket,
-  User
-} from '@types';
+import { Absence, Image, Property, Record, Task, Ticket, User } from '@types';
 
 export type ImageFile = {
   objectId: string;
-  name: string;
-  url: string;
-  createdAt: string;
-  updatedAt: string;
+  name?: string;
+  title?: string;
+  label?: string;
+  url?: string;
+  createdAt?: string;
+  updatedAt?: string;
   local_url?: string;
   file: {
-    name: string;
-    url: string;
-    __type: string;
+    name?: string;
+    url?: string;
+    __type?: string;
   };
 };
 
-interface DataStoreState {
+export interface DataStoreState {
   tasks: Task[];
   users: User[];
   tickets: Ticket[];
@@ -32,6 +26,8 @@ interface DataStoreState {
   absences: Absence[];
   currentRecord: Record | null;
   setData: (data: Class[], entry: DataStoreEntry) => void;
+  upsertData: (data: Class[], entry: DataStoreEntry) => void;
+  removeData: (ids: string[], entry: DataStoreEntry) => void;
   clearAll: () => void;
   getTaskById: (id: string) => Task | undefined;
   getUserById: (id: string) => User | undefined;
@@ -87,13 +83,8 @@ export type UseFindDataParams = {
   sortBy?: string;
   sortOrder?: 'ascending' | 'descending';
   saveLocally?: boolean;
+  /** When true, always query the server instead of returning cached Zustand data */
+  forceNetwork?: boolean;
 };
 
-export type Class =
-  | Task
-  | Ticket
-  | User
-  | Property
-  | Image
-  | Record
-  | Absence;
+export type Class = Task | Ticket | User | Property | Image | Record | Absence;

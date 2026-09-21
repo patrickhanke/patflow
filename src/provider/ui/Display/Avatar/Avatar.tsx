@@ -56,6 +56,7 @@ const Avatar = ({
         source={{
           uri: getImageUrl({
             fileName: portrait.name,
+            url: (portrait as { url?: string }).url,
             width: 64,
             height: 64
           })

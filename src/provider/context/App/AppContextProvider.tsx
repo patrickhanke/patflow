@@ -71,7 +71,7 @@ const AppContextProvider = ({ children }: { children: React.ReactNode }) => {
 
         if (lg && lg.user && lg.user.role) {
           const response = await axiosclient().post('/functions/get-project', {
-            userId: lg.user.objectId
+            userId: lg?.user?.objectId
           });
 
           const pid = response.data.result;
@@ -83,7 +83,7 @@ const AppContextProvider = ({ children }: { children: React.ReactNode }) => {
             const response = await axiosclient().post(
               '/functions/get-project',
               {
-                userId: loggedInUser.user.objectId
+                userId: loggedInUser?.user?.objectId
               }
             );
 

@@ -62,12 +62,12 @@ const Tasks = ({ route }: TasksProps) => {
     let tasksArray = tasks;
     if (!isAdmin) {
       tasksArray = tasksArray.filter((task: TaskType) =>
-        task.assigned_staff.includes(user.objectId)
+        task.assigned_staff?.includes(user.objectId)
       );
     } else if (usersFilter.length > 0) {
       tasksArray = tasksArray.filter((task: TaskType) =>
         usersFilter.some((userId: string) =>
-          task.assigned_staff.includes(userId)
+          task.assigned_staff?.includes(userId)
         )
       );
     }
@@ -84,7 +84,7 @@ const Tasks = ({ route }: TasksProps) => {
       section => section.id === 'next_week'
     );
     const afterNextWeek: TaskSection = sectionTasks.filter(
-      section => section.id === 'after_next_week'
+      section => section.id === 'after_next_week' || section.id === 'future'
     );
 
     return {
@@ -106,7 +106,7 @@ const Tasks = ({ route }: TasksProps) => {
   const handleRefresh = async () => {
     setRefreshing(true);
     reloadDate();
-    await loadTasks();
+    await loadTasks({ forceNetwork: true });
     setRefreshing(false);
   };
 
@@ -166,7 +166,7 @@ const Tasks = ({ route }: TasksProps) => {
             renderItem={({ item, index, section }) => (
               <Task
                 task={item}
-                refetch={() => Promise.resolve([])}
+                refetch={loadTasks}
                 isAdmin={isAdmin}
                 isLast={index === section.data.length - 1}
               />

@@ -9,24 +9,27 @@ const sortTasksForList = (array: Array<Task>) => {
   const arrayCopy = [...array];
 
   const sortedArray = arrayCopy.sort((a, b) => {
-    if (a.dates.length === 0) {
+    const aDates = a.dates ?? [];
+    const bDates = b.dates ?? [];
+    if (aDates.length === 0) {
       return 1;
     }
-    if (b.dates.length === 0) {
+    if (bDates.length === 0) {
       return -1;
     }
-    if (new Date(a.dates[0]).getTime() > new Date(b.dates[0]).getTime()) {
+    if (new Date(aDates[0]).getTime() > new Date(bDates[0]).getTime()) {
       return 1;
     }
-    if (new Date(a.dates[0]).getTime() < new Date(b.dates[0]).getTime()) {
+    if (new Date(aDates[0]).getTime() < new Date(bDates[0]).getTime()) {
       return -1;
     }
     return 0;
   });
 
   for (let i = 0; i < sortedArray.length; i += 1) {
-    if (sortedArray[i].dates.length > 0) {
-      sortedArray[i].dates.forEach((arrayDate: string) => {
+    const taskDates = sortedArray[i].dates ?? [];
+    if (taskDates.length > 0) {
+      taskDates.forEach((arrayDate: string) => {
         let date: string | undefined;
         let titleDate: string | undefined;
         let id: TaskSection[number]['id'] | undefined = 'this_week';
@@ -83,11 +86,19 @@ const sortTasksForList = (array: Array<Task>) => {
           }
         } else {
           const timeCopy = cloneDeep(sortedArray[i].time);
-          date = timeCopy?.dates?.find(
-            (dateToFind: string) =>
-              formatISO9075(dateToFind, { representation: 'date' }) ===
-              arrayDate
-          );
+          date =
+            timeCopy?.dates?.find(
+              (dateToFind: string) =>
+                formatISO9075(dateToFind, { representation: 'date' }) ===
+                arrayDate
+            ) ??
+            timeCopy?.next_dates?.find(
+              (dateToFind: string) =>
+                dateToFind === arrayDate ||
+                formatISO9075(dateToFind, { representation: 'date' }) ===
+                  arrayDate
+            ) ??
+            arrayDate;
 
           if (date) {
             const timeDate = date.length > 10 ? date : `${date}T23:59`;
@@ -111,9 +122,11 @@ const sortTasksForList = (array: Array<Task>) => {
               nextMonday.setDate(now.getDate() + daysUntilMonday);
               nextMonday.setHours(0, 0, 0, 0);
 
-              // Calculate 7 days from next Monday
+              // Calculate 7 and 14 days from next Monday
               const nextMondayPlus7 = new Date(nextMonday);
               nextMondayPlus7.setDate(nextMonday.getDate() + 7);
+              const nextMondayPlus14 = new Date(nextMonday);
+              nextMondayPlus14.setDate(nextMonday.getDate() + 14);
 
               if (taskDate.getTime() < nextMonday.getTime()) {
                 titleDate = 'Diese Woche';
@@ -125,6 +138,13 @@ const sortTasksForList = (array: Array<Task>) => {
               ) {
                 titleDate = 'Nächste Woche';
                 id = 'next_week';
+                date = arrayDate;
+              } else if (
+                taskDate.getTime() >= nextMondayPlus7.getTime() &&
+                taskDate.getTime() < nextMondayPlus14.getTime()
+              ) {
+                titleDate = 'Übernächste Woche';
+                id = 'after_next_week';
                 date = arrayDate;
               } else {
                 titleDate = getDateString(arrayDate);

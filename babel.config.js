@@ -1,3 +1,5 @@
+const path = require('path');
+
 module.exports = {
   presets: ['module:@react-native/babel-preset'],
   plugins: [
@@ -17,14 +19,12 @@ module.exports = {
         ],
         alias: {
           // This needs to be mirrored in tsconfig.json
-          '@provider': './src/provider',
-          '@types': './src/types',
-          '@content': './content'
+          '@provider': path.resolve(__dirname, 'src/provider'),
+          '@types': path.resolve(__dirname, 'src/types'),
+          '@content': path.resolve(__dirname, 'content')
         }
       }
-    ],
-    'react-native-reanimated/plugin'
+    ]
   ]
 };
-
 // https://www.reactnativeschool.com/how-to-setup-path-alias-in-a-react-native-typescript-app

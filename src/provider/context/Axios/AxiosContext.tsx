@@ -8,13 +8,18 @@ import React, {
 } from 'react';
 import axios, { AxiosError, AxiosInstance } from 'axios';
 import axiosRetry from 'axios-retry';
+import {
+  SASHIDO_API_URL,
+  SASHIDO_APP_ID,
+  SASHIDO_REST_KEY
+} from '@env';
 import { userDataHandler } from '../../User';
 
 const defaultClient = axios.create({
-  baseURL: process.env.SASHIDO_API_URL,
+  baseURL: SASHIDO_API_URL,
   headers: {
-    'X-Parse-Application-Id': process.env.SASHIDO_APP_ID,
-    'X-Parse-REST-API-Key': process.env.SASHIDO_REST_KEY,
+    'X-Parse-Application-Id': SASHIDO_APP_ID,
+    'X-Parse-REST-API-Key': SASHIDO_REST_KEY,
     // 'X-Parse-Session-Token': token,
     'Content-Type': 'application/json'
   }
@@ -38,11 +43,10 @@ export const AxiosProvider = ({ children }: { children: ReactNode }) => {
 
   const axiosclient = useCallback(() => {
     const client = axios.create({
-      baseURL: process.env.SASHIDO_API_URL,
+      baseURL: SASHIDO_API_URL,
       headers: {
-        'X-Parse-Application-Id': process.env.SASHIDO_APP_ID,
-        'X-Parse-REST-API-Key': process.env.SASHIDO_REST_KEY,
-        // 'X-Parse-Master-Key': process.env.SASHIDO_MASTER_KEY,
+        'X-Parse-Application-Id': SASHIDO_APP_ID,
+        'X-Parse-REST-API-Key': SASHIDO_REST_KEY,
         'X-Parse-Session-Token': token,
         'Content-Type': 'application/json'
       }

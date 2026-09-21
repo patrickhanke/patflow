@@ -1,4 +1,4 @@
-import { Modal, ThemeContext, useDataStore, useParse } from '@provider';
+import { GlobalModal, Modal, ThemeContext, useDataStore, useParse } from '@provider';
 import { Absence, Day, Record, UserDisplayData } from '@types';
 import React, {
   useCallback,
@@ -183,9 +183,9 @@ const ProfileAbsence = ({ user }: { user: UserDisplayData }) => {
         </View>
       </View>
       {record && (
-        <Modal
+        <GlobalModal
           isVisible={createAbsence}
-          setIsVisible={setCreateAbsence}
+          backHandler={() => setCreateAbsence(false)}
           dataHasChanged={dataHasChanged}
           title="Urlaubsanfrage erstellen"
         >
@@ -195,7 +195,7 @@ const ProfileAbsence = ({ user }: { user: UserDisplayData }) => {
             setDataHasChanged={setDataHasChanged}
             setCreateTime={setCreateAbsence}
           />
-        </Modal>
+        </GlobalModal>
       )}
     </>
   );

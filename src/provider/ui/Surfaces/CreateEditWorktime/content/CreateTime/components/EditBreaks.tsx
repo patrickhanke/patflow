@@ -2,8 +2,13 @@ import React, { FC, useContext, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { EditBreaksProps } from '../types';
 import styles from '../styles';
-import { Button, Divider, getStringFromDate, ThemeContext } from '@provider';
-import DatePicker from 'react-native-date-picker';
+import {
+  Button,
+  DateTimePickerModal,
+  Divider,
+  getStringFromDate,
+  ThemeContext
+} from '@provider';
 import { formatISO9075 } from 'date-fns';
 
 const EditBreaks: FC<EditBreaksProps> = ({
@@ -108,7 +113,7 @@ const EditBreaks: FC<EditBreaksProps> = ({
             </Pressable>
           </View>
         </View>
-        <DatePicker
+        <DateTimePickerModal
           date={datePicker === 'start' ? breakStart : breakEnd}
           mode="time"
           locale="de"
@@ -121,16 +126,21 @@ const EditBreaks: FC<EditBreaksProps> = ({
           }}
           minuteInterval={1}
           title={datePicker === 'start' ? 'Startzeit' : 'Endzeit'}
-          is24hourSource="locale"
-          modal
           open={datePicker === 'start' || datePicker === 'end'}
           cancelText="Abbrechen"
           confirmText="Bestätigen"
-          onConfirm={() => {
+          onConfirm={confirmedDate => {
+            const nextStart =
+              datePicker === 'start' && confirmedDate
+                ? confirmedDate
+                : breakStart;
+            const nextEnd =
+              datePicker === 'end' && confirmedDate ? confirmedDate : breakEnd;
+
             setBreak({
               ...breakItem,
-              start: formatISO9075(getStringFromDate(breakStart)),
-              end: formatISO9075(getStringFromDate(breakEnd))
+              start: formatISO9075(getStringFromDate(nextStart)),
+              end: formatISO9075(getStringFromDate(nextEnd))
             });
             setDatePicker(undefined);
           }}

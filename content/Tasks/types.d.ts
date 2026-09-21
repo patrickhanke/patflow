@@ -4,7 +4,7 @@ import type { RouteProp } from '@react-navigation/native';
 type RootTabParamList = {
   Aufgaben: { admin?: boolean };
   Tickets: undefined;
-  Arbeiteszeiten: undefined;
+  Arbeitszeiten: undefined;
   Profil: undefined;
   Admin: { admin?: boolean };
 };

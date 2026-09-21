@@ -4,7 +4,7 @@ import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 type RootTabParamList = {
   Aufgaben: { admin?: boolean };
   Tickets: undefined;
-  Arbeiteszeiten: undefined;
+  Arbeitszeiten: undefined;
   Profil: undefined;
   Admin: { admin?: boolean };
 };

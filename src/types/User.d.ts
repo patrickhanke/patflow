@@ -33,7 +33,7 @@ export type User = {
   last_name: string;
   is_superuser: boolean;
   type: string;
-  role: UserRole;
+  roles: string[];
   is_worker: boolean;
   portrait: ApplicationTypes.Image;
   time_settings: UserTimeSettings;

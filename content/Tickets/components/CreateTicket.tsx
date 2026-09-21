@@ -108,13 +108,11 @@ const CreateTicket = ({
 
         console.log('Ticket object saved:', Ticket.id);
 
-        // If we have images and a ticket ID, save them
         if (assets?.length > 0) {
           await saveImages({
             assets,
             title,
-            ticketId: Ticket.id,
-            propertyId: object?.value
+            ticketId: Ticket.id
           });
         }
       } else if (!isConnected) {
@@ -124,28 +122,26 @@ const CreateTicket = ({
           description,
           type: 'ticket',
           created_by: user.objectId,
+          propertyId: object?.value,
           property: object?.value,
           project: projectId,
           state: 'open',
-          images: assets?.map(asset => asset.uri),
+          images: [],
           task: null
         };
-
-        if (assets?.length > 0) {
-          for (const asset of assets) {
-            saveImages({
-              assets: [asset],
-              title,
-              ticketId: ticketId,
-              propertyId: object?.value
-            });
-          }
-        }
 
         await saveObjectToLocalStorage({
           object: localTicket,
           key: ticketId
         });
+
+        if (assets?.length > 0) {
+          await saveImages({
+            assets,
+            title,
+            ticketId
+          });
+        }
       }
     } catch (error) {
       indicatorHandler(

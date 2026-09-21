@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { SASHIDO_API_URL, SASHIDO_APP_ID, SASHIDO_REST_KEY } from '@env';
 import userDataHandler from './userDataHandler';
 import { User } from '@types';
 import { UserLoggedInHandlerFunction } from './types';
@@ -40,14 +41,14 @@ const useUser = () => {
 
     const httpHeaders = {
       'X-Parse-Session-Token': sessionToken || '',
-      'X-Parse-Application-Id': process.env.SASHIDO_APP_ID || '',
-      'X-Parse-REST-API-Key': process.env.SASHIDO_REST_KEY || ''
+      'X-Parse-Application-Id': SASHIDO_APP_ID,
+      'X-Parse-REST-API-Key': SASHIDO_REST_KEY
     };
 
     const headers = new Headers(httpHeaders);
 
     if (sessionToken) {
-      await fetch(`${process.env.SASHIDO_API_URL}users/me`, {
+      await fetch(`${SASHIDO_API_URL}users/me`, {
         method: 'GET',
         headers
       })
@@ -55,11 +56,13 @@ const useUser = () => {
         .then(async actualData => {
           console.log({ actualData });
           const userData = await fetch(
-            `${process.env.SASHIDO_API_URL}functions/get-user-data`,
+            `${SASHIDO_API_URL}functions/get_user_data`,
             {
               method: 'POST',
               body: JSON.stringify({
-                email: actualData.email
+                email: actualData.email,
+                username: actualData.email,
+                project_id: 'HC0trnizvl'
               }),
               headers
             }

@@ -4,6 +4,7 @@ import {
   GlobalModal,
   useDataHandler,
   useDataStore,
+  useFindData,
   useNotificationIntentStore
 } from '@provider';
 import { Task as TaskType } from '@types';
@@ -23,6 +24,7 @@ const DisplayTask = ({ isAdmin = false }: { isAdmin?: boolean }) => {
   const clearIntent = useNotificationIntentStore(state => state.clearIntent);
   const tasks = useDataStore(state => state.tasks);
   const { updateData } = useDataHandler();
+  const { loadTasks } = useFindData();
 
   const intentTask: TaskType | undefined = useMemo(() => {
     if (intent?.action !== 'task_assigned') return undefined;
@@ -35,7 +37,7 @@ const DisplayTask = ({ isAdmin = false }: { isAdmin?: boolean }) => {
 
   const completeIntentTask = useCallback(async () => {
     if (!intentTask) return;
-    const nextDates = cloneDeep(intentTask.dates);
+    const nextDates = cloneDeep(intentTask.dates ?? []);
     nextDates.splice(0, 1);
     await updateData({
       className: 'Task',
@@ -59,7 +61,7 @@ const DisplayTask = ({ isAdmin = false }: { isAdmin?: boolean }) => {
         task={intentTask}
         date={intentTask.dates[0] ?? ''}
         completeTask={completeIntentTask}
-        refetch={() => Promise.resolve([])}
+        refetch={loadTasks}
         isAdmin={isAdmin}
       />
     </GlobalModal>

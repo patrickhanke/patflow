@@ -7,8 +7,7 @@ import { create } from 'zustand';
  * server-sent FCM messages.
  */
 export type NotificationIntent =
-  | { action: 'task_assigned'; id: string }
-  | { action: 'unknown'; id?: string };
+  { action: 'task_assigned'; id: string } | { action: 'unknown'; id?: string };
 
 type NotificationIntentState = {
   intent: NotificationIntent | null;

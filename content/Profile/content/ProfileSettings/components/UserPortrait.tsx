@@ -11,7 +11,7 @@ import { Asset } from 'react-native-image-picker';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import styles from '../styles';
 
-type Portrait = { name: string } | undefined;
+type Portrait = { name?: string; url?: string } | undefined;
 
 type UserPortraitProps = {
   portrait?: Portrait;
@@ -49,6 +49,7 @@ const UserPortrait = ({ portrait, onImagePicked }: UserPortraitProps) => {
           <Image
             src={getImageUrl({
               fileName: portrait.name,
+              url: portrait.url,
               width: 120,
               height: 120
             })}

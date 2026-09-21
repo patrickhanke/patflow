@@ -1,7 +1,12 @@
 import { AppContext, useParse } from '@provider';
-import { useCallback, useContext, useMemo, useState } from 'react';
+import { useCallback, useContext, useMemo, useRef } from 'react';
 import useDataStore from './useDataStore';
-import { Class, QueryRestriction, UseFindDataParams } from './types';
+import {
+  Class,
+  DataStoreEntry,
+  QueryRestriction,
+  UseFindDataParams
+} from './types';
 import {
   Absence,
   Image,
@@ -15,6 +20,8 @@ import RNFS from 'react-native-fs';
 import { getPendingUploadKeys } from '../utils';
 import savePendingUploads from '../functions/savePendingUploads';
 import createLocalImageFile from '../functions/createLocalImageFile';
+import { normalizeTask, TASK_PROPERTIES } from './normalizeParseData';
+import { PATFLOW_PROJECT_ID } from '@provider/constants/project';
 
 function applyRestriction(
   query: Parse.Query,
@@ -71,41 +78,67 @@ function applyRestriction(
   }
 }
 
+type CoalesceSlot<T> = {
+  promise: Promise<T>;
+  queued: boolean;
+  fn: () => Promise<T>;
+};
+
+const coalesceSlots = new Map<string, CoalesceSlot<unknown>>();
+const fetchGeneration: Partial<Record<DataStoreEntry, number>> = {};
+
+function coalesceFetch<T>(key: string, fn: () => Promise<T>): Promise<T> {
+  const existing = coalesceSlots.get(key) as CoalesceSlot<T> | undefined;
+  if (existing) {
+    existing.queued = true;
+    existing.fn = fn;
+    console.log(`[useFindData] ${key} already in flight, queued latest fetch`);
+    return existing.promise;
+  }
+
+  const slot: CoalesceSlot<T> = {
+    queued: false,
+    fn,
+    promise: Promise.resolve() as Promise<T>
+  };
+
+  const pump = async (): Promise<T> => {
+    const currentFn = slot.fn;
+    try {
+      const result = await currentFn();
+      if (slot.queued) {
+        slot.queued = false;
+        return pump();
+      }
+      coalesceSlots.delete(key);
+      return result;
+    } catch (error) {
+      if (slot.queued) {
+        slot.queued = false;
+        return pump();
+      }
+      coalesceSlots.delete(key);
+      throw error;
+    }
+  };
+
+  slot.promise = pump();
+  coalesceSlots.set(key, slot as CoalesceSlot<unknown>);
+  return slot.promise;
+}
+
+function getCachedEntry<T extends Class>(entry?: DataStoreEntry): T[] {
+  if (!entry || entry === 'adminTasks') {
+    return [];
+  }
+  return (useDataStore.getState()[entry] as T[] | undefined) ?? [];
+}
+
 const useFindData = () => {
   const { isConnected, projectId } = useContext(AppContext);
   const { Parse, isReady } = useParse();
-  const { setData } = useDataStore();
-  const [tasksLoading, setTasksLoading] = useState<boolean>(false);
-  const [ticketsLoading, setTicketsLoading] = useState<boolean>(false);
-  const [usersLoading, setUsersLoading] = useState<boolean>(false);
-  const [propertiesLoading, setPropertiesLoading] = useState<boolean>(false);
-  const [imagesLoading, setImagesLoading] = useState<boolean>(false);
-  const [recordsLoading, setRecordsLoading] = useState<boolean>(false);
-  const [absencesLoading, setAbsencesLoading] = useState<boolean>(false);
-
-  const loadImages = useCallback(
-    async (imageIds: string[]): Promise<Image[]> => {
-      if (imagesLoading) {
-        return [];
-      }
-      setImagesLoading(true);
-
-      const imageIdArray = imageIds.filter(
-        id => typeof id === 'string' && id.length === 10
-      );
-      const images = await loadData<Image>({
-        className: 'Image',
-        entry: 'images',
-        properties: ['objectId', 'name', 'file', 'created_by'],
-        restrictions: [
-          { key: 'objectId', value: imageIdArray, operator: 'containedIn' }
-        ],
-        saveLocally: true
-      });
-      setImagesLoading(false);
-      return images;
-    },
-    [imagesLoading]
+  const loadImagesRef = useRef<(imageIds: string[]) => Promise<Image[]>>(
+    async () => []
   );
 
   const loadData = useCallback(
@@ -116,21 +149,27 @@ const useFindData = () => {
       properties,
       limit = 500,
       sortBy = 'createdAt',
-      sortOrder = 'descending'
+      sortOrder = 'descending',
+      saveLocally = true,
+      forceNetwork = false
     }: UseFindDataParams): Promise<T[]> => {
       if (!isReady) {
-        return [];
+        return getCachedEntry<T>(entry);
       }
 
       const pendingUploads = await getPendingUploadKeys();
       console.log('pendingUploads', JSON.stringify(pendingUploads, null, 2));
 
-      if (!isConnected) {
+      if (!isConnected && !forceNetwork) {
+        const cached = getCachedEntry<T>(entry);
         console.log(
-          `[useFindData] Offline: returning cached data from Zustand for ${className}`
+          `[useFindData] Offline: returning ${cached.length} cached ${className} from Zustand`
         );
-        return [];
+        return cached;
       }
+
+      const generation = (fetchGeneration[entry] ?? 0) + 1;
+      fetchGeneration[entry] = generation;
 
       try {
         const ParseClass = Parse.Object.extend(className);
@@ -163,21 +202,34 @@ const useFindData = () => {
           return full as unknown as T;
         });
 
+        if (className === 'Task') {
+          data = data.map(item =>
+            normalizeTask(item as unknown as Record<string, unknown>)
+          ) as T[];
+        }
+
         if (className === 'Image' && RNFS) {
           await createLocalImageFile({ results, data });
         }
 
-        if (entry) {
+        if (fetchGeneration[entry] !== generation) {
+          console.log(
+            `[useFindData] Ignoring stale ${className} result (gen ${generation} vs ${fetchGeneration[entry]})`
+          );
+          return data;
+        }
+
+        if (entry && saveLocally) {
           console.log(
             `[useFindData] Setting ${data.length} ${className} to Zustand store for ${entry}`
           );
-          setData(data, entry);
+          useDataStore.getState().setData(data, entry);
         }
 
         if (results.length > 0 && properties?.includes('images')) {
           const imageIds = results.flatMap(r => r.get('images') ?? []);
           if (imageIds.length > 0) {
-            await loadImages(imageIds as string[]);
+            await loadImagesRef.current(imageIds as string[]);
           }
         }
 
@@ -187,11 +239,51 @@ const useFindData = () => {
           `[useFindData] Error loading ${className} from server:`,
           error
         );
-        return [];
+        return getCachedEntry<T>(entry);
       }
     },
-    [Parse, isReady, isConnected, setData, loadImages]
+    [Parse, isReady, isConnected]
   );
+
+  const loadImages = useCallback(
+    async (imageIds: string[]): Promise<Image[]> => {
+      const imageIdArray = imageIds
+        .map(id => {
+          if (typeof id === 'string') {
+            return id;
+          }
+          if (id && typeof id === 'object' && 'objectId' in id) {
+            const objectId = (id as { objectId?: unknown }).objectId;
+            return typeof objectId === 'string' ? objectId : null;
+          }
+          return null;
+        })
+        .filter((id): id is string => Boolean(id));
+      if (imageIdArray.length === 0) {
+        return [];
+      }
+      return coalesceFetch('images', () =>
+        loadData<Image>({
+          className: 'Image',
+          entry: 'images',
+          properties: [
+            'objectId',
+            'title',
+            'label',
+            'name',
+            'file',
+            'created_by'
+          ],
+          restrictions: [
+            { key: 'objectId', value: imageIdArray, operator: 'containedIn' }
+          ],
+          saveLocally: true
+        })
+      );
+    },
+    [loadData]
+  );
+  loadImagesRef.current = loadImages;
 
   const handlePendingUploads = useCallback(async () => {
     const pendingUploads = await getPendingUploadKeys();
@@ -202,223 +294,181 @@ const useFindData = () => {
 
   const loadTickets = useCallback(
     async ({ userId }: { userId: string }): Promise<Ticket[]> => {
-      if (ticketsLoading) {
-        return [];
-      }
-      setTicketsLoading(true);
-
       const UserClass = Parse.Object.extend('User');
-      const tickets = await loadData<Ticket>({
-        className: 'Ticket',
-        entry: 'tickets',
-        properties: [
-          'objectId',
-          'title',
-          'description',
-          'createdAt',
-          'state',
-          'property',
-          'created_by',
-          'task',
-          'images'
-        ],
-        restrictions: [
-          {
-            key: 'created_by',
-            value: UserClass.createWithoutData(userId),
-            operator: 'equalTo'
-          },
-          {
-            key: 'state',
-            value: ['open', 'in_progress'],
-            operator: 'containedIn'
-          }
-        ],
-        saveLocally: true
-      });
-      setTicketsLoading(false);
-      return tickets;
+      return coalesceFetch(`tickets:${userId}`, () =>
+        loadData<Ticket>({
+          className: 'Ticket',
+          entry: 'tickets',
+          properties: [
+            'objectId',
+            'title',
+            'description',
+            'createdAt',
+            'state',
+            'property',
+            'created_by',
+            'task',
+            'images'
+          ],
+          restrictions: [
+            {
+              key: 'created_by',
+              value: UserClass.createWithoutData(userId),
+              operator: 'equalTo'
+            },
+            {
+              key: 'state',
+              value: ['open', 'in_progress'],
+              operator: 'containedIn'
+            }
+          ],
+          saveLocally: true
+        })
+      );
     },
-    [loadData, ticketsLoading]
+    [loadData, Parse]
   );
 
   const loadUsers = useCallback(async (): Promise<User[]> => {
-    if (usersLoading) {
-      return [];
-    }
-    setUsersLoading(true);
+    const effectiveProjectId = projectId || PATFLOW_PROJECT_ID;
 
-    const users = await loadData<User>({
-      className: 'User',
-      entry: 'users',
-      properties: [
-        'objectId',
-        'first_name',
-        'last_name',
-        'email',
-        'createdAt',
-        'color',
-        'portrait'
-      ],
-      saveLocally: true
-    });
-
-    setUsersLoading(false);
-    return users;
-  }, [loadData, usersLoading]);
-
-  const loadProperties = useCallback(async (): Promise<Property[]> => {
-    if (propertiesLoading) {
-      return [];
-    }
-    setPropertiesLoading(true);
-
-    const properties = await loadData<Property>({
-      className: 'Property',
-      entry: 'properties',
-      properties: ['objectId', 'name', 'label', 'createdAt'],
-      saveLocally: true
-    });
-
-    setPropertiesLoading(false);
-    return properties;
-  }, [loadData, propertiesLoading]);
-
-  const loadTasks = useCallback(async (): Promise<Task[]> => {
-    if (tasksLoading) {
-      console.log('[loadTasks] Already loading, skipping duplicate request');
-      return [];
-    }
-    console.log('[loadTasks] Starting fetch...');
-
-    setTasksLoading(true);
-
-    try {
-      const tasks = await loadData<Task>({
-        className: 'Task',
-        entry: 'tasks',
+    return coalesceFetch('users', () =>
+      loadData<User>({
+        className: 'User',
+        entry: 'users',
         properties: [
           'objectId',
-          'title',
-          'description',
-          'assigned_staff',
-          'dates',
-          'time',
-          'state',
-          'images',
-          'comments',
-          'documents',
-          'type',
+          'first_name',
+          'last_name',
+          'email',
           'createdAt',
-          'property',
-          'ticket'
+          'color',
+          'portrait'
         ],
         restrictions: [
           {
-            key: 'state',
-            value: 'assigned',
-            operator: 'equalTo'
+            key: 'project',
+            value: effectiveProjectId,
+            pointerClassName: 'Project'
           }
         ],
         saveLocally: true
-      });
+      })
+    );
+  }, [loadData, projectId]);
 
-      setTasksLoading(false);
-      return tasks;
-    } catch (error) {
-      console.error('[loadTasks] Error:', error);
-      setTasksLoading(false);
-      return [];
-    }
-  }, [loadData, tasksLoading]);
+  const loadProperties = useCallback(async (): Promise<Property[]> => {
+    return coalesceFetch('properties', () =>
+      loadData<Property>({
+        className: 'Property',
+        entry: 'properties',
+        properties: ['objectId', 'name', 'label', 'createdAt'],
+        saveLocally: true
+      })
+    );
+  }, [loadData]);
+
+  const loadTasks = useCallback(
+    async (options?: { forceNetwork?: boolean }): Promise<Task[]> => {
+      console.log('[loadTasks] Starting fetch...');
+      return coalesceFetch('tasks', () =>
+        loadData<Task>({
+          className: 'Task',
+          entry: 'tasks',
+          properties: [...TASK_PROPERTIES],
+          restrictions: [
+            {
+              key: 'state',
+              value: 'assigned',
+              operator: 'equalTo'
+            }
+          ],
+          saveLocally: true,
+          forceNetwork: options?.forceNetwork
+        })
+      );
+    },
+    [loadData]
+  );
 
   const loadRecords = useCallback(
     async ({ userId }: { userId: string }): Promise<RecordType[]> => {
-      if (recordsLoading) {
-        return [];
-      }
-      setRecordsLoading(true);
       const UserClass = Parse.Object.extend('_User');
       const userPointer = UserClass.createWithoutData(userId);
       const currentYear = new Date().getFullYear();
       const currentYearArray = [currentYear, currentYear - 1];
-      const records = await loadData<RecordType>({
-        className: 'Record',
-        entry: 'records',
-        properties: [
-          'objectId',
-          'createdAt',
-          'user',
-          'year',
-          'default_times',
-          'start_date',
-          'end_date',
-          'time_settings',
-          'vacation',
-          'saldo'
-        ],
-        restrictions: [
-          {
-            key: 'user',
-            value: userPointer,
-            operator: 'equalTo'
-          },
-          {
-            key: 'year',
-            value: currentYearArray,
-            operator: 'containedIn'
-          }
-        ],
-        saveLocally: true
-      });
-      setRecordsLoading(false);
-      return records;
+      return coalesceFetch(`records:${userId}`, () =>
+        loadData<RecordType>({
+          className: 'Record',
+          entry: 'records',
+          properties: [
+            'objectId',
+            'createdAt',
+            'user',
+            'year',
+            'default_times',
+            'start_date',
+            'end_date',
+            'time_settings',
+            'vacation',
+            'saldo'
+          ],
+          restrictions: [
+            {
+              key: 'user',
+              value: userPointer,
+              operator: 'equalTo'
+            },
+            {
+              key: 'year',
+              value: currentYearArray,
+              operator: 'containedIn'
+            }
+          ],
+          saveLocally: true
+        })
+      );
     },
-    [loadData, recordsLoading]
+    [loadData, Parse]
   );
 
   const loadAbsences = useCallback(
     async ({ userId }: { userId: string }): Promise<Absence[]> => {
-      if (absencesLoading) {
-        return [];
-      }
-      setAbsencesLoading(true);
       const currentYear = new Date().getFullYear();
       const currentYearArray = [currentYear, currentYear - 1];
 
       const UserClass = Parse.Object.extend('_User');
-      const absences = await loadData<Absence>({
-        className: 'Absence',
-        entry: 'absences',
-        properties: [
-          'objectId',
-          'start_date',
-          'end_date',
-          'comment',
-          'state',
-          'user',
-          'type',
-          'year'
-        ],
-        restrictions: [
-          {
-            key: 'user',
-            value: UserClass.createWithoutData(userId),
-            operator: 'equalTo'
-          },
-          {
-            key: 'year',
-            value: currentYearArray,
-            operator: 'containedIn'
-          }
-        ],
-        saveLocally: true
-      });
-
-      setAbsencesLoading(false);
-      return absences;
+      return coalesceFetch(`absences:${userId}`, () =>
+        loadData<Absence>({
+          className: 'Absence',
+          entry: 'absences',
+          properties: [
+            'objectId',
+            'start_date',
+            'end_date',
+            'comment',
+            'state',
+            'user',
+            'type',
+            'year'
+          ],
+          restrictions: [
+            {
+              key: 'user',
+              value: UserClass.createWithoutData(userId),
+              operator: 'equalTo'
+            },
+            {
+              key: 'year',
+              value: currentYearArray,
+              operator: 'containedIn'
+            }
+          ],
+          saveLocally: true
+        })
+      );
     },
-    [loadData, absencesLoading]
+    [loadData, Parse]
   );
 
   return useMemo(
@@ -438,6 +488,7 @@ const useFindData = () => {
       loadUsers,
       loadProperties,
       loadTasks,
+      handlePendingUploads,
       loadRecords,
       loadAbsences
     ]

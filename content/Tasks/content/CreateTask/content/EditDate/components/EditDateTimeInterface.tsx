@@ -1,9 +1,7 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { Pressable, Text, View } from 'react-native';
-import DatePicker from 'react-native-date-picker';
 import AntIcons from 'react-native-vector-icons/AntDesign';
-import { ThemeContext } from '@provider';
-import { Button } from '@provider';
+import { Button, DateTimePickerModal, ThemeContext } from '@provider';
 import styles from '../styles';
 
 type EditDateTimeInterfaceProps = {
@@ -78,15 +76,17 @@ const EditDateTimeInterface: React.FC<EditDateTimeInterfaceProps> = ({
     });
   };
 
-  const handleDateConfirm = () => {
-    setSelectedDate(tempDate);
-    onChange(formatOutput(tempDate, includeTime));
+  const handleDateConfirm = (confirmedDate?: Date) => {
+    const nextDate = confirmedDate ?? tempDate;
+    setSelectedDate(nextDate);
+    onChange(formatOutput(nextDate, includeTime));
     setDatePicker(undefined);
   };
 
-  const handleTimeConfirm = () => {
-    setSelectedDate(tempDate);
-    onChange(formatOutput(tempDate, true));
+  const handleTimeConfirm = (confirmedDate?: Date) => {
+    const nextDate = confirmedDate ?? tempDate;
+    setSelectedDate(nextDate);
+    onChange(formatOutput(nextDate, true));
     setDatePicker(undefined);
   };
 
@@ -174,12 +174,11 @@ const EditDateTimeInterface: React.FC<EditDateTimeInterfaceProps> = ({
       </View>
 
       {/* Date Picker */}
-      <DatePicker
+      <DateTimePickerModal
         date={tempDate}
         mode="date"
         locale="de"
         onDateChange={newDate => setTempDate(newDate)}
-        modal
         open={datePicker === 'date'}
         cancelText="Abbrechen"
         confirmText="Bestätigen"
@@ -189,14 +188,12 @@ const EditDateTimeInterface: React.FC<EditDateTimeInterfaceProps> = ({
       />
 
       {/* Time Picker */}
-      <DatePicker
+      <DateTimePickerModal
         date={tempDate}
         mode="time"
         locale="de"
         onDateChange={newDate => setTempDate(newDate)}
         minuteInterval={1}
-        is24hourSource="locale"
-        modal
         open={datePicker === 'time'}
         cancelText="Abbrechen"
         confirmText="Bestätigen"

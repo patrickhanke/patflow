@@ -6,7 +6,10 @@
 import { useState, useCallback, useEffect } from 'react';
 import Parse from 'parse/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { FIREBASE_APP_ID, GCMS_SENDER_ID } from '@env';
 import { getFcmToken } from '../../gcm';
+import { initializeParse } from '../config';
+import { runCloudFunction } from '../utils/parseHelpers';
 
 export interface ParseUserData {
   objectId: string;
@@ -63,6 +66,7 @@ function useParseAuth(): UseParseAuthReturn {
   useEffect(() => {
     const checkSession = async () => {
       try {
+        await initializeParse();
         const currentUser = await Parse.User.currentAsync();
         if (currentUser) {
           // Fetch latest user data with role
@@ -88,6 +92,7 @@ function useParseAuth(): UseParseAuthReturn {
       setError(null);
 
       try {
+        await initializeParse();
         console.log('Attempting login for:', username);
         const loggedInUser = await Parse.User.logIn(username, password);
         console.log('Login successful, user:', loggedInUser.id);
@@ -129,21 +134,25 @@ function useParseAuth(): UseParseAuthReturn {
           console.log('FCM token:', fcmToken ? 'obtained' : 'null');
           if (fcmToken) {
             console.log('Creating installation...');
-            await Parse.Cloud.run('create-installation', {
-              deviceType: 'android',
-              deviceToken: fcmToken,
-              channels: [],
-              appIdentifier: process.env.FIREBASE_APP_ID,
-              appName: 'patflow_web',
-              appVersion: '0.8.2',
-              parseVersion: '5.3.0',
-              localeIdentifier: 'de-DE',
-              timeZone: 'GMT',
-              user: userData.objectId,
-              GCMSenderId: process.env.GCMS_SENDER_ID,
-              pushType: 'gcm',
-              installationId: installationId
-            });
+            await runCloudFunction(
+              'create-installation',
+              {
+                deviceType: 'android',
+                deviceToken: fcmToken,
+                channels: [],
+                appIdentifier: FIREBASE_APP_ID,
+                appName: 'patflow_web',
+                appVersion: '0.8.2',
+                parseVersion: '5.3.0',
+                localeIdentifier: 'de-DE',
+                timeZone: 'GMT',
+                user: userData.objectId,
+                GCMSenderId: GCMS_SENDER_ID,
+                pushType: 'gcm',
+                installationId: installationId
+              },
+              sessionToken
+            );
           }
         } catch (installError) {
           console.warn('Installation creation failed:', installError);

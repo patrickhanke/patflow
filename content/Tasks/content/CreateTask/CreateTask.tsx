@@ -3,9 +3,10 @@ import {
   Button,
   Divider,
   ThemeContext,
-  useDataHandler
+  useDataHandler,
+  useDataStore
 } from '@provider';
-import { DateObject } from '@types';
+import { DateObject, Task } from '@types';
 import React, { useCallback, useContext, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import EditDescription from './components/EditDescription';
@@ -90,6 +91,28 @@ const CreateTask = ({ closeModal }: { closeModal: () => void }) => {
       updateObject,
       feedback: 'Aufgabe erfolgreich erstellt',
       async afterSaveHandler(objectId: string) {
+        useDataStore.getState().upsertData(
+          [
+            {
+              objectId,
+              title,
+              description,
+              documents: [],
+              comments: [],
+              images: [],
+              assigned_staff: assignedStaff,
+              dates: date.next_dates ?? [],
+              time: date,
+              state: 'assigned',
+              type: date.type.value,
+              ...(selectedProperty
+                ? { property: { objectId: selectedProperty } }
+                : {})
+            } as unknown as Task
+          ],
+          'tasks'
+        );
+
         if (selectedTicket) {
           await updateData({
             className: 'Ticket',

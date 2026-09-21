@@ -89,9 +89,12 @@ const TaskSlideIn = ({
         objectId: task.objectId,
         updateObject: { assigned_staff: assignedStaff }
       });
+      useDataStore
+        .getState()
+        .upsertData([{ ...task, assigned_staff: assignedStaff }], 'tasks');
       await refetch();
     },
-    [task.objectId, refetch]
+    [task, refetch, updateData]
   );
 
   const updateDescriptionHandler = useCallback(
@@ -367,8 +370,11 @@ const TaskSlideIn = ({
             onPress={() => {
               completeTask();
             }}
-            text="Aufgabe erledigt"
+            text={
+              !isConnected ? 'Keine Internetverbindung' : 'Aufgabe erledigt'
+            }
             size="medium"
+            disabled={!isConnected}
           />
         </View>
       </Modal>

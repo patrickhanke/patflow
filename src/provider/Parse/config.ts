@@ -5,16 +5,31 @@
 
 import Parse from 'parse/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {
+  SASHIDO_API_URL,
+  SASHIDO_APP_ID,
+  SASHIDO_JAVASCRIPT_KEY,
+  SASHIDO_MASTER_KEY
+} from '@env';
 
 // Parse configuration from environment variables
 export const PARSE_CONFIG = {
-  APP_ID: process.env.SASHIDO_APP_ID || '',
-  JS_KEY: process.env.SASHIDO_JAVASCRIPT_KEY || '',
-  MASTER_KEY: process.env.SASHIDO_MASTER_KEY || '',
-  SERVER_URL: process.env.SASHIDO_API_URL || ''
+  APP_ID: SASHIDO_APP_ID,
+  JS_KEY: SASHIDO_JAVASCRIPT_KEY,
+  MASTER_KEY: SASHIDO_MASTER_KEY,
+  SERVER_URL: SASHIDO_API_URL
 };
 
 let isInitialized = false;
+let initPromise: Promise<void> | null = null;
+
+const assertParseConfig = () => {
+  if (!PARSE_CONFIG.APP_ID || !PARSE_CONFIG.JS_KEY || !PARSE_CONFIG.SERVER_URL) {
+    throw new Error(
+      'Missing Parse configuration. Check .env and @env imports in config.ts.'
+    );
+  }
+};
 
 /**
  * Initialize Parse SDK with AsyncStorage for React Native
@@ -22,53 +37,49 @@ let isInitialized = false;
  */
 export const initializeParse = async (): Promise<void> => {
   if (isInitialized) {
-    console.log('Parse already initialized');
     return;
   }
 
-  try {
-    // Set AsyncStorage for React Native before initializing
-    Parse.setAsyncStorage(AsyncStorage);
+  if (initPromise) {
+    return initPromise;
+  }
 
-    // Initialize Parse with your credentials
-    Parse.initialize(PARSE_CONFIG.APP_ID, PARSE_CONFIG.JS_KEY);
-    Parse.serverURL = PARSE_CONFIG.SERVER_URL;
+  initPromise = (async () => {
+    assertParseConfig();
 
-    // Enable local datastore for offline capabilities
-    Parse.enableLocalDatastore();
+    try {
+      Parse.setAsyncStorage(AsyncStorage);
+      Parse.initialize(PARSE_CONFIG.APP_ID, PARSE_CONFIG.JS_KEY);
+      Parse.serverURL = PARSE_CONFIG.SERVER_URL;
+      Parse.enableLocalDatastore();
 
-    isInitialized = true;
-    console.log('Parse SDK initialized successfully');
+      isInitialized = true;
+      console.log('Parse SDK initialized successfully');
+    } catch (error) {
+      console.error('Failed to initialize Parse SDK:', error);
 
-    // Check if database cleanup is needed (async, don't block initialization)
-    // checkAndCleanupIfNeeded()
-    //   .then(cleanedUp => {
-    //     if (cleanedUp) {
-    //       console.log('Database cleanup completed during initialization');
-    //     }
-    //   })
-    //   .catch(error => {
-    //     console.error('Error during database cleanup check:', error);
-    //   });
-  } catch (error) {
-    console.error('Failed to initialize Parse SDK:', error);
+      if (
+        error instanceof Error &&
+        (error.message?.includes('SQLITE_FULL') ||
+          error.message?.includes('database or disk is full'))
+      ) {
+        console.log('Database full during initialization, attempting cleanup...');
+        try {
+          await Parse.Object.unPinAllObjects();
+        } catch (cleanupError) {
+          console.error('Failed to unpin all objects:', cleanupError);
+        }
+      }
 
-    // If initialization fails due to full database, try cleanup and retry
-    if (
-      error instanceof Error &&
-      (error.message?.includes('SQLITE_FULL') ||
-        error.message?.includes('database or disk is full'))
-    ) {
-      console.log('Database full during initialization, attempting cleanup...');
-      try {
-        await Parse.Object.unPinAllObjects();
-      } catch (error) {
-        console.error('Failed to unpin all objects:', error);
+      throw error;
+    } finally {
+      if (!isInitialized) {
+        initPromise = null;
       }
     }
+  })();
 
-    throw error;
-  }
+  return initPromise;
 };
 
 /**

@@ -3,6 +3,12 @@
  * Common utility functions for working with Parse objects
  */
 
+import axios from 'axios';
+import {
+  SASHIDO_API_URL,
+  SASHIDO_APP_ID,
+  SASHIDO_REST_KEY
+} from '@env';
 import Parse from 'parse/react-native';
 
 /**
@@ -116,13 +122,36 @@ export const batchDelete = async (objects: Parse.Object[]): Promise<void> => {
 };
 
 /**
- * Execute a Parse Cloud Function
+ * Execute a Parse Cloud Function via the REST API.
+ * Prefer this over Parse.Cloud.run — the JS SDK can report "Invalid function"
+ * for deployed cloud code that is reachable through /functions/:name.
  */
-export const runCloudFunction = async <T = any>(
+export const runCloudFunction = async <T = unknown>(
   functionName: string,
-  params?: Record<string, any>
+  params?: Record<string, unknown>,
+  sessionToken?: string | null
 ): Promise<T> => {
-  return Parse.Cloud.run(functionName, params);
+  const headers: Record<string, string> = {
+    'X-Parse-Application-Id': SASHIDO_APP_ID,
+    'X-Parse-REST-API-Key': SASHIDO_REST_KEY,
+    'Content-Type': 'application/json'
+  };
+
+  if (sessionToken) {
+    headers['X-Parse-Session-Token'] = sessionToken;
+  }
+
+  const client = axios.create({
+    baseURL: SASHIDO_API_URL,
+    headers
+  });
+
+  const response = await client.post<{ result: T }>(
+    `/functions/${functionName}`,
+    params ?? {}
+  );
+
+  return response.data.result;
 };
 
 /**

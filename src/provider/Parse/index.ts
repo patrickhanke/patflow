@@ -16,7 +16,10 @@ export {
   useParseDataHandler,
   useFindData,
   useDataStore,
-  useSaveImages
+  useSaveImages,
+  mapTaskFromParseJson,
+  normalizeTask,
+  TASK_PROPERTIES
 } from './hooks';
 
 // Parse Utilities

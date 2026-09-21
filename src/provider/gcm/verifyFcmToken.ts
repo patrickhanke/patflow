@@ -1,4 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {
+  SASHIDO_API_URL,
+  SASHIDO_APP_ID,
+  SASHIDO_MASTER_KEY,
+  SASHIDO_REST_KEY
+} from '@env';
 import getFcmToken from './getFcmToken';
 import axios from 'axios';
 
@@ -10,11 +16,11 @@ const verifyFcmToken = async () => {
   console.log('Session Token:', session_token);
 
   const client = axios.create({
-    baseURL: process.env.SASHIDO_API_URL,
+    baseURL: SASHIDO_API_URL,
     headers: {
-      'X-Parse-Application-Id': process.env.SASHIDO_APP_ID,
-      'X-Parse-REST-API-Key': process.env.SASHIDO_REST_KEY,
-      'X-Parse-Master-Key': process.env.SASHIDO_MASTER_KEY,
+      'X-Parse-Application-Id': SASHIDO_APP_ID,
+      'X-Parse-REST-API-Key': SASHIDO_REST_KEY,
+      'X-Parse-Master-Key': SASHIDO_MASTER_KEY,
       'X-Parse-Session-Token': session_token,
       'Content-Type': 'application/json'
     }

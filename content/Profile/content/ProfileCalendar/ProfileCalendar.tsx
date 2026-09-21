@@ -4,19 +4,16 @@ import React, {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState
 } from 'react';
 import CalendarHeader from './content/CalendarHeader';
-import { ActivityIndicator, Image, Text, View } from 'react-native';
-import Animated, {
-  useAnimatedScrollHandler,
-  useSharedValue,
-  useAnimatedStyle
-} from 'react-native-reanimated';
+import { ActivityIndicator, Animated, Image, Text, View } from 'react-native';
 import styles from './styles';
 import { Day, User } from '@types';
-import { ThemeContext, useParse, getImageUrl } from '@provider';
+import { AppContext, ThemeContext, useParse, getImageUrl } from '@provider';
 import weekdays from '@provider/constants/weekdays';
+import { PATFLOW_PROJECT_ID } from '@provider/constants/project';
 
 type DayData = {
   [userId: string]: {
@@ -27,20 +24,20 @@ type DayData = {
 const ProfileCalendar = () => {
   const [intervalIndex, setIntervalIndex] = useState(new Date().getMonth());
   const { themeColors, applicationStyles } = useContext(ThemeContext);
+  const { projectId } = useContext(AppContext);
   const { Parse, isReady } = useParse();
   const [loading, setLoading] = useState(false);
   const [days, setDays] = useState<Day[]>([]);
   const [staff, setStaff] = useState<User[]>([]);
 
-  const scrollX = useSharedValue(0);
+  const scrollX = useRef(new Animated.Value(0)).current;
 
   const year = new Date().getFullYear();
 
-  const scrollHandler = useAnimatedScrollHandler({
-    onScroll: event => {
-      scrollX.value = event.contentOffset.x;
-    }
-  });
+  const scrollHandler = Animated.event(
+    [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+    { useNativeDriver: true }
+  );
 
   const loadData = useCallback(async () => {
     if (!isReady) return;
@@ -60,7 +57,12 @@ const ProfileCalendar = () => {
       setDays(dayResults.map(r => r.toJSON() as unknown as Day));
       // Load staff
       const UserClass = Parse.Object.extend('_User');
+      const ProjectClass = Parse.Object.extend('Project');
       const staffQuery = new Parse.Query(UserClass);
+      staffQuery.equalTo(
+        'project',
+        ProjectClass.createWithoutData(projectId || PATFLOW_PROJECT_ID)
+      );
       staffQuery.select(
         'objectId',
         'first_name',
@@ -78,7 +80,7 @@ const ProfileCalendar = () => {
     } finally {
       setLoading(false);
     }
-  }, [isReady, Parse, year, intervalIndex]);
+  }, [isReady, Parse, year, intervalIndex, projectId]);
 
   useEffect(() => {
     if (isReady) {
@@ -168,6 +170,7 @@ const ProfileCalendar = () => {
         source={{
           uri: getImageUrl({
             fileName: user.portrait.name,
+            url: (user.portrait as { url?: string }).url,
             width: 40,
             height: 40
           })
@@ -251,31 +254,19 @@ const ProfileCalendar = () => {
     );
   };
 
-  const AnimatedAvatar = ({ user }: { user: User }) => {
-    const animatedStyle = useAnimatedStyle(() => {
-      return {
-        transform: [{ translateX: scrollX.value }]
-      };
-    });
-
-    return (
-      <Animated.View
-        style={[
-          styles.avatar_sticky_container,
-          animatedStyle,
-          { backgroundColor: themeColors.light_background }
-        ]}
-      >
-        {renderUserAvatar(user)}
-      </Animated.View>
-    );
-  };
-
-  const headerAnimatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ translateX: -scrollX.value }]
-    };
-  });
+  const renderAnimatedAvatar = (user: User) => (
+    <Animated.View
+      style={[
+        styles.avatar_sticky_container,
+        {
+          transform: [{ translateX: scrollX }],
+          backgroundColor: themeColors.light_background
+        }
+      ]}
+    >
+      {renderUserAvatar(user)}
+    </Animated.View>
+  );
 
   return (
     <View style={{ flex: 1 }}>
@@ -293,7 +284,16 @@ const ProfileCalendar = () => {
             <View style={styles.header_container}>
               {/* <View style={styles.avatar_header_space} /> */}
               <View style={styles.header_scroll_wrapper}>
-                <Animated.View style={[styles.days_row, headerAnimatedStyle]}>
+                <Animated.View
+                  style={[
+                    styles.days_row,
+                    {
+                      transform: [
+                        { translateX: Animated.multiply(scrollX, -1) }
+                      ]
+                    }
+                  ]}
+                >
                   {dates.map(date => (
                     <View key={date.dateString} style={styles.day_header}>
                       <Text
@@ -327,7 +327,7 @@ const ProfileCalendar = () => {
                 <View>
                   {staff.map(user => (
                     <View key={user.objectId} style={styles.user_row_wrapper}>
-                      <AnimatedAvatar user={user} />
+                      {renderAnimatedAvatar(user)}
                       <View style={styles.days_row}>
                         {dates.map(date =>
                           renderDaySquare(

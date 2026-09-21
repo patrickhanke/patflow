@@ -38,8 +38,11 @@ const SingleImageDisplay = ({
     if (imageValue) {
       return {
         objectId: imageValue.objectId,
-        title: imageValue.name,
-        remote_url: imageValue.file.url
+        title: imageValue.title || imageValue.label || imageValue.name || '',
+        remote_url: getImageUrl({
+          fileName: imageValue.file?.name,
+          url: imageValue.file?.url
+        })
       };
     }
     return null;
@@ -52,10 +55,12 @@ const SingleImageDisplay = ({
           <Pressable hitSlop={6} onPress={() => setIsVisible(true)}>
             <Image
               source={{
-                uri: getImageUrl({
-                  fileName: renderImage.objectId,
-                  width: width || 200
-                })
+                uri:
+                  renderImage.remote_url ||
+                  getImageUrl({
+                    fileName: renderImage.objectId,
+                    width: width || 200
+                  })
               }}
               style={[styles.image, { borderRadius: borderRadius || 0, width }]}
               resizeMode="contain"
@@ -118,10 +123,12 @@ const SingleImageDisplay = ({
         <ImageView
           images={[
             {
-              uri: getImageUrl({
-                fileName: renderImage.objectId,
-                width: 960
-              })
+              uri:
+                renderImage.remote_url ||
+                getImageUrl({
+                  fileName: renderImage.objectId,
+                  width: 960
+                })
             }
           ]}
           imageIndex={0}

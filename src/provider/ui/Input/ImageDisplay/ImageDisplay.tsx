@@ -55,7 +55,8 @@ const ImageDisplay = ({
                 uri:
                   imageData?.local_url ||
                   getImageUrl({
-                    fileName: imageData?.file?.name || '',
+                    fileName: imageData?.file?.name,
+                    url: imageData?.file?.url,
                     width: 80
                   })
               };
@@ -102,7 +103,8 @@ const ImageDisplay = ({
                 const uri =
                   imageData?.local_url ||
                   getImageUrl({
-                    fileName: imageData.title ?? '',
+                    fileName: imageData?.file?.name,
+                    url: imageData?.file?.url,
                     width: 960
                   });
                 return { uri: uri || '' };

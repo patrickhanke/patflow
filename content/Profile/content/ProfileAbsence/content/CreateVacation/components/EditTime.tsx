@@ -1,7 +1,6 @@
-import { ThemeContext } from '@provider';
+import { DateTimePickerModal, ThemeContext } from '@provider';
 import React, { useContext, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
-import DatePicker from 'react-native-date-picker';
 import styles from '../styles';
 
 const EditTime = ({
@@ -44,23 +43,23 @@ const EditTime = ({
         </Pressable>
         <View />
       </View>
-      <DatePicker
+      <DateTimePickerModal
         date={newTime}
         mode="date"
         locale="de"
         onDateChange={newDate => setNewTime(newDate)}
         minuteInterval={1}
         title={type === 'start' ? 'Anfang' : 'Ende'}
-        is24hourSource="locale"
-        modal
         open={datePicker}
         cancelText="Abbrechen"
         confirmText="Bestätigen"
         minimumDate={new Date(year, 0, 1)}
         maximumDate={new Date(year, 11, 31)}
-        onConfirm={() => {
+        onConfirm={confirmedDate => {
+          const nextDate = confirmedDate ?? newTime;
           setDatePicker(false);
-          timeHandler(newTime);
+          setNewTime(nextDate);
+          timeHandler(nextDate);
         }}
         onTouchCancel={() => setDatePicker(false)}
         onCancel={() => setDatePicker(false)}

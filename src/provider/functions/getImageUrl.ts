@@ -1,14 +1,21 @@
+import { SASHIDO_FILE_URL } from '@env';
+
 const getImageUrl = ({
   fileName,
+  url,
   height,
   width
 }: {
-  fileName: string;
+  fileName?: string;
+  url?: string;
   height?: number;
   width?: number;
 }) => {
+  if (url) {
+    return url;
+  }
   if (!fileName) return '';
-  const baseUrl = `${process.env.SASHIDO_FILE_URL}${fileName}`;
+  const baseUrl = `${SASHIDO_FILE_URL}${fileName}`;
   const params = new URLSearchParams();
 
   if (width) params.set('w', width.toString());

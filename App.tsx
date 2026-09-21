@@ -58,7 +58,6 @@ import { getWeek } from 'date-fns';
 
 import messaging from '@react-native-firebase/messaging';
 import notifee, { EventType } from '@notifee/react-native';
-import { intersection } from 'lodash';
 
 // Background FCM + notifee handlers are registered in `index.js` via
 // `src/provider/gcm/backgroundMessageHandler.ts` so they fire when the app is
@@ -161,8 +160,13 @@ function App(): React.JSX.Element {
                 if (!loading && !user) {
                   return <SignIn />;
                 }
-                console.log('loadApp');
-                console.log('user', user);
+                let is_admin = false;
+
+                user?.roles.forEach(role => {
+                  if (adminRoles.includes(role)) {
+                    is_admin = true;
+                  }
+                });
 
                 return (
                   <>
@@ -303,7 +307,7 @@ function App(): React.JSX.Element {
                             )
                           }}
                         />
-                        {intersection(adminRoles, user?.roles) && (
+                        {is_admin && (
                           <Tab.Screen
                             name="Admin"
                             component={Tasks}

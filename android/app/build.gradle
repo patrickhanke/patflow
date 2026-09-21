@@ -83,8 +83,8 @@ android {
         applicationId "com.hgs_app_mobile"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 100
-        versionName "1.0.0"
+        versionCode 101
+        versionName "1.0.1"
     }   
     signingConfigs {
         // debug {

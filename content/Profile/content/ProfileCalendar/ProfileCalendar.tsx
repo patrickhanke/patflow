@@ -119,6 +119,8 @@ const ProfileCalendar = () => {
     const data: DayData = {};
 
     days.forEach((day: Day) => {
+      if (!day.user) return;
+
       const userId = day.user.objectId;
       const date = day.date;
 

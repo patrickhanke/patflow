@@ -7,6 +7,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Pressable, Text, useColorScheme, View } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import {
   NavigationContainer,
   createNavigationContainerRef
@@ -153,16 +154,19 @@ function App(): React.JSX.Element {
         <ThemeContextProvider>
           <AppContextProvider>
             <AppContext.Consumer>
-              {({ user, loading, isConnected, setIsConnected }) => {
+              {({ user, loading, projectId, isConnected, setIsConnected }) => {
                 if (loading || !parseInitialized) {
                   return <Start />;
                 }
-                if (!loading && !user) {
+                if (!user) {
                   return <SignIn />;
+                }
+                if (!projectId) {
+                  return <Start />;
                 }
                 let is_admin = false;
 
-                user?.roles.forEach(role => {
+                user?.roles?.forEach(role => {
                   if (adminRoles.includes(role)) {
                     is_admin = true;
                   }
@@ -347,4 +351,10 @@ function App(): React.JSX.Element {
   );
 }
 
-export default App;
+export default function Root() {
+  return (
+    <SafeAreaProvider>
+      <App />
+    </SafeAreaProvider>
+  );
+}

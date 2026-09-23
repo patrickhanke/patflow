@@ -21,15 +21,28 @@ interface MyContextProps {
 
 export const AppContext = createContext(undefined as unknown as MyContextProps);
 
+const resolveProjectId = (result: unknown): string | undefined => {
+  if (typeof result === 'string' && result.length > 0) {
+    return result;
+  }
+  if (result && typeof result === 'object' && 'objectId' in result) {
+    const id = (result as { objectId?: unknown }).objectId;
+    if (typeof id === 'string' && id.length > 0) {
+      return id;
+    }
+  }
+  return undefined;
+};
+
 const AppContextProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState(null as unknown as User);
-  const [projectId, setProjectId] = useState<string | undefined>('');
+  const [projectId, setProjectId] = useState<string | undefined>(undefined);
   const [isConnected, setIsConnected] = useState(false);
   const axiosclient = useAxiosClient();
   const [appState, setAppState] = useState(AppState.currentState);
   const { getUser, userLoggedInHandler } = useUser();
 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [indicatorContent, setIndicatorContent] = useState(
     [] as IndicatorElementWithType[]
   );
@@ -63,40 +76,72 @@ const AppContextProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, []);
 
+  const fetchProjectId = useCallback(
+    async (userId: string, sessionToken?: string | null) => {
+      const response = await axiosclient().post(
+        '/functions/get-project',
+        { userId },
+        sessionToken
+          ? { headers: { 'X-Parse-Session-Token': sessionToken } }
+          : undefined
+      );
+      return resolveProjectId(response.data?.result);
+    },
+    [axiosclient]
+  );
+
   useEffect(() => {
+    let cancelled = false;
+
     const check = async () => {
-      if (!user) {
-        setLoading(true);
-        const lg = await getUser();
+      if (user) {
+        return;
+      }
 
-        if (lg && lg.user && lg.user.role) {
-          const response = await axiosclient().post('/functions/get-project', {
-            userId: lg?.user?.objectId
-          });
-
-          const pid = response.data.result;
-          setProjectId(pid);
-          setUser(lg.user);
-        } else {
-          const loggedInUser = await userLoggedInHandler();
-          if (loggedInUser && loggedInUser.user) {
-            const response = await axiosclient().post(
-              '/functions/get-project',
-              {
-                userId: loggedInUser?.user?.objectId
-              }
-            );
-
-            const pid = response.data.result;
-            setProjectId(pid);
-            setUser(loggedInUser.user);
-          }
+      setLoading(true);
+      try {
+        const stored = await getUser();
+        if (!stored.token) {
+          return;
         }
-        setLoading(false);
+
+        const loggedIn = await userLoggedInHandler();
+        if (cancelled) {
+          return;
+        }
+
+        if (!loggedIn.user?.objectId) {
+          return;
+        }
+
+        const pid = await fetchProjectId(
+          loggedIn.user.objectId,
+          loggedIn.token || stored.token
+        );
+        if (cancelled) {
+          return;
+        }
+
+        if (!pid) {
+          return;
+        }
+
+        setProjectId(pid);
+        setUser(loggedIn.user);
+      } catch (error) {
+        console.error('Failed to restore session:', error);
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     };
+
     check();
-  }, [user]);
+    return () => {
+      cancelled = true;
+    };
+  }, [user, fetchProjectId, getUser, userLoggedInHandler]);
 
   const indicatorHandler = useCallback(
     (content: IndicatorElement, type: IndicatorType) => {

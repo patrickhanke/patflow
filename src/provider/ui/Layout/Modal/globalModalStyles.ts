@@ -3,14 +3,9 @@ import { StyleSheet } from 'react-native';
 const styles = StyleSheet.create({
   modal: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.2)',
     height: '100%',
     width: '100%',
-    position: 'static',
-    top: 0,
-    left: 0,
     flexDirection: 'column',
-    justifyContent: 'flex-end',
     zIndex: 5,
     elevation: 5
   },
@@ -28,9 +23,7 @@ const styles = StyleSheet.create({
   modalContent: {
     paddingHorizontal: 12,
     paddingVertical: 12,
-    flexBasis: 240,
-    flexGrow: 1,
-    flexShrink: 0.5
+    flex: 1
   },
   centeredView: {
     flex: 1,

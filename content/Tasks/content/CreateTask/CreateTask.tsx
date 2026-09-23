@@ -151,7 +151,10 @@ const CreateTask = ({ closeModal }: { closeModal: () => void }) => {
 
   return (
     <View style={styles.slidein_container}>
-      <ScrollView contentContainerStyle={styles.scroll_container}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={styles.scroll_container}
+      >
         <EditTitle title={title} setTitle={setTitle} />
         <View>
           <EditDescription

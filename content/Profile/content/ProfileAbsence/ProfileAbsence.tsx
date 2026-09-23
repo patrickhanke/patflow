@@ -1,4 +1,4 @@
-import { GlobalModal, Modal, ThemeContext, useDataStore, useParse } from '@provider';
+import { GlobalModal, ThemeContext, useDataStore, useParse } from '@provider';
 import { Absence, Day, Record, UserDisplayData } from '@types';
 import React, {
   useCallback,

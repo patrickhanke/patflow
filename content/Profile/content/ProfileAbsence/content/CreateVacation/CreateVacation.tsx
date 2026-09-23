@@ -10,13 +10,7 @@ import {
 } from '@provider';
 import { Day, ErrorMessage } from '@types';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
-import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  Text,
-  View
-} from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import initialAbsence from './constants/initialAbsence';
 import checkForConflicts from './functions/checkForConflicts';
 import { CreateVacationProps } from './types';
@@ -199,6 +193,11 @@ const CreateVacation = ({
             __type: 'Pointer',
             className: '_User',
             objectId: user?.objectId
+          },
+          project: {
+            __type: 'Pointer',
+            className: 'Project',
+            objectId: 'HC0trnizvl'
           }
         }
       });
@@ -217,10 +216,7 @@ const CreateVacation = ({
   }, [absenceState, dataHasChanged]);
 
   return (
-    <KeyboardAvoidingView
-      style={{ paddingHorizontal: 12, paddingTop: 12 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
+    <View style={{ flex: 1, paddingHorizontal: 12, paddingTop: 12 }}>
       <ScrollView
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{
@@ -297,14 +293,14 @@ const CreateVacation = ({
       <View>
         <Divider size="large" />
         <Button
-          size="large"
+          size="medium"
           disabled={errors.length > 0 || loading}
           onPress={() => createAbsenceHandler()}
           color={themeColors.primary}
           text="Urlaubsantrag einreichen"
         />
       </View>
-    </KeyboardAvoidingView>
+    </View>
   );
 };
 

@@ -12,7 +12,6 @@ import {
   Keyboard,
   KeyboardAvoidingView,
   Modal,
-  Platform,
   Pressable,
   Text,
   View
@@ -20,6 +19,7 @@ import {
 import styles from './styles';
 import { useBackHandler } from '@react-native-community/hooks';
 import { iconRender, ThemeContext } from '@provider';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const CustomModal = ({
   isVisible,
@@ -39,6 +39,7 @@ const CustomModal = ({
   layer?: 1 | 2 | 3 | 4;
 }) => {
   const { themeColors, theme, applicationStyles } = useContext(ThemeContext);
+  const insets = useSafeAreaInsets();
   const fadeAnim = useRef(new Animated.Value(0)).current; // Initial opacity 0
   const translateYAnim = useRef(new Animated.Value(100)).current; // Initial position off screen bottom
   const keyboardHeightAnim = useRef(new Animated.Value(0)).current;
@@ -202,7 +203,8 @@ const CustomModal = ({
                 opacity: fadeAnim,
                 transform: [{ translateY: translateYAnim }],
                 width: '100%',
-                backgroundColor: themeColors.background
+                backgroundColor: themeColors.background,
+                paddingBottom: 24 + insets.bottom
               }
             ]}
           >
@@ -215,12 +217,13 @@ const CustomModal = ({
               </Pressable>
             </View>
             <KeyboardAvoidingView
-              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+              behavior="padding"
               style={{
                 paddingTop: 12,
                 paddingHorizontal: 12,
                 paddingBottom: 12,
-                position: 'relative'
+                position: 'relative',
+                flexShrink: 1
               }}
             >
               {children}

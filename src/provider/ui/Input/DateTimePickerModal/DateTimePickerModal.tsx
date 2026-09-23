@@ -30,11 +30,16 @@ export type DateTimePickerModalProps = {
   onTouchCancel?: () => void;
 };
 
+const toGermanLocale = (value: string) => {
+  const normalized = value.replace(/-/g, '_');
+  return normalized === 'de' ? 'de_DE' : normalized;
+};
+
 const DateTimePickerModal = ({
   date,
   mode,
   open,
-  locale = 'de',
+  locale = 'de-DE',
   minuteInterval = 1,
   title,
   minimumDate,
@@ -70,6 +75,9 @@ const DateTimePickerModal = ({
         minuteInterval,
         minimumDate,
         maximumDate,
+        firstDayOfWeek: 1,
+        positiveButton: { label: confirmText },
+        negativeButton: { label: cancelText },
         onChange: (event: DateTimePickerEvent, selectedDate?: Date) => {
           if (event.type === 'set' && selectedDate) {
             onDateChange?.(selectedDate);
@@ -91,6 +99,8 @@ const DateTimePickerModal = ({
     minuteInterval,
     minimumDate,
     maximumDate,
+    confirmText,
+    cancelText,
     onDateChange,
     onConfirm,
     onCancel,
@@ -143,7 +153,7 @@ const DateTimePickerModal = ({
             value={tempDate}
             mode={mode}
             display="spinner"
-            locale={locale}
+            locale={toGermanLocale(locale)}
             minuteInterval={minuteInterval}
             minimumDate={minimumDate}
             maximumDate={maximumDate}

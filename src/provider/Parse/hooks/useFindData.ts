@@ -157,8 +157,7 @@ const useFindData = () => {
         return getCachedEntry<T>(entry);
       }
 
-      const pendingUploads = await getPendingUploadKeys();
-      console.log('pendingUploads', JSON.stringify(pendingUploads, null, 2));
+      // const pendingUploads = await getPendingUploadKeys();
 
       if (!isConnected && !forceNetwork) {
         const cached = getCachedEntry<T>(entry);

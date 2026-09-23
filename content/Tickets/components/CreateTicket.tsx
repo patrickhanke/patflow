@@ -6,13 +6,7 @@ import React, {
   useEffect,
   useState
 } from 'react';
-import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  Text,
-  View
-} from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import {
   AppContext,
   AssetDisplay,
@@ -211,17 +205,14 @@ const CreateTicket = ({
   }, [modalDataHasChanged, title, description, object, assets]);
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      keyboardVerticalOffset={40}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
+    <View style={{ flex: 1 }}>
       <ScrollView
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{
-          // flex: 1,
           gap: 12,
-          backgroundColor: themeColors.background
+          backgroundColor: themeColors.background,
+          paddingBottom: 12,
+          flexGrow: 1
         }}
         showsVerticalScrollIndicator={true}
         bounces={false}
@@ -297,11 +288,9 @@ const CreateTicket = ({
       </ScrollView>
       <View
         style={{
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          backgroundColor: themeColors.background
+          backgroundColor: themeColors.background,
+          paddingTop: 8,
+          paddingBottom: 8
         }}
       >
         <Button
@@ -312,7 +301,7 @@ const CreateTicket = ({
           text="Ticket erstellen"
         />
       </View>
-    </KeyboardAvoidingView>
+    </View>
   );
 };
 

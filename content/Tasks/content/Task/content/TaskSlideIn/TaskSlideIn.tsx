@@ -35,7 +35,7 @@ const TaskSlideIn = ({
 }: {
   task: Task;
   date: string;
-  completeTask: () => void;
+  completeTask: () => void | Promise<void>;
   refetch: () => Promise<Task[]>;
   isAdmin?: boolean;
 }) => {
@@ -367,8 +367,10 @@ const TaskSlideIn = ({
           <Button
             color={themeColors.primary}
             fontColor={themeColors.button}
-            onPress={() => {
-              completeTask();
+            onPress={async () => {
+              setIsVisible(false);
+              await completeTask();
+              await refetch();
             }}
             text={
               !isConnected ? 'Keine Internetverbindung' : 'Aufgabe erledigt'

@@ -2,12 +2,12 @@ import React, { FC, useCallback, useContext, useState } from 'react';
 import {
   convertMillisecondsToString,
   Divider,
-  getDateObject,
   IconButton,
   Modal,
   ThemeContext,
   useDataHandler
 } from '@provider';
+import { absoluteTimeLabel } from '../../../functions/absoluteTime';
 import { Alert, Text, View } from 'react-native';
 import { TimeProps } from '../types';
 import styles from '../styles';
@@ -50,19 +50,15 @@ const Time: FC<TimeProps> = ({ day, refetch }) => {
           <View style={styles.time_container}>
             <View style={applicationStyles.horizontal_container}>
               <Text style={{ color: themeColors.text }}>{'Start'}</Text>
-              <Text
-                style={{
-                  color: themeColors.text
-                }}
-              >{`${getDateObject(day?.time?.start).time}`}</Text>
+              <Text style={{ color: themeColors.text }}>
+                {absoluteTimeLabel(day?.time?.start)}
+              </Text>
             </View>
             <View style={applicationStyles.horizontal_container}>
               <Text style={{ color: themeColors.text }}>{'Ende'}</Text>
-              <Text
-                style={{
-                  color: themeColors.text
-                }}
-              >{`${getDateObject(day?.time?.end).time}`}</Text>
+              <Text style={{ color: themeColors.text }}>
+                {absoluteTimeLabel(day?.time?.end)}
+              </Text>
             </View>
             <View style={applicationStyles.horizontal_container}>
               <Text style={{ color: themeColors.text }}>{'Pause'}</Text>

@@ -1,7 +1,13 @@
-import { DateTimePickerModal, formatDateToISO, ThemeContext } from '@provider';
+import { DateTimePickerModal, ThemeContext } from '@provider';
 import React, { useContext, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import styles from '../styles';
+import {
+  absoluteDateTimeToDate,
+  absoluteTimeLabel,
+  toAbsoluteDateTime,
+  withAbsoluteClock
+} from '../../../functions/absoluteTime';
 
 const EditTime = ({
   type,
@@ -16,8 +22,6 @@ const EditTime = ({
 }) => {
   const [datePicker, setDatePicker] = useState(false);
   const { themeColors, applicationStyles } = useContext(ThemeContext);
-
-  const [newTime, setNewTime] = useState<string>(date);
 
   return (
     <>
@@ -52,30 +56,25 @@ const EditTime = ({
                 { color: disabled ? themeColors.light_font : themeColors.text }
               ]}
             >
-              {new Date(date).toLocaleTimeString('de-DE', {
-                hour: '2-digit',
-                minute: '2-digit'
-              })}
+              {absoluteTimeLabel(date)}
             </Text>
           </View>
         </Pressable>
       </View>
       <DateTimePickerModal
-        date={new Date(newTime)}
+        date={absoluteDateTimeToDate(date) ?? new Date()}
         mode="time"
         locale="de"
-        onDateChange={newDate => {
-          setNewTime(formatDateToISO(newDate));
-        }}
         minuteInterval={1}
         title={type === 'start' ? 'Startzeit' : 'Endzeit'}
         open={datePicker}
         cancelText="Abbrechen"
         confirmText="Bestätigen"
         onConfirm={confirmedDate => {
-          const time = confirmedDate ? formatDateToISO(confirmedDate) : newTime;
+          const time = confirmedDate
+            ? withAbsoluteClock(date, confirmedDate)
+            : toAbsoluteDateTime(date);
           setDatePicker(false);
-          setNewTime(time);
           timeHandler(type, time);
         }}
         onTouchCancel={() => setDatePicker(false)}

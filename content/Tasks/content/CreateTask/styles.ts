@@ -2,6 +2,7 @@ import { StyleSheet } from 'react-native';
 
 const styles = StyleSheet.create({
   slidein_container: {
+    flex: 1,
     paddingTop: 24,
     flexDirection: 'column',
     alignItems: 'stretch',

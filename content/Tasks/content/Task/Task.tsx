@@ -21,7 +21,7 @@ const Task = ({ task, refetch, isAdmin = false, isLast }: TaskProps) => {
   const properties = useDataStore(state => state.properties);
 
   const completeTask = useCallback(async () => {
-    const taskDatesCopy = cloneDeep(task.dates);
+    const taskDatesCopy = cloneDeep(task.dates ?? []);
     taskDatesCopy.splice(0, 1);
 
     await updateData({
@@ -32,8 +32,17 @@ const Task = ({ task, refetch, isAdmin = false, isLast }: TaskProps) => {
       },
       feedback: 'Aufgabe erfolgreich als erledigt markiert'
     });
+
+    const store = useDataStore.getState();
+    if (taskDatesCopy.length === 0) {
+      store.removeData([task.objectId], 'tasks');
+    } else {
+      store.upsertData([{ ...task, dates: taskDatesCopy }], 'tasks');
+    }
+
     setIsVisible(false);
-  }, [task.dates, task.objectId, updateData, refetch]);
+    await refetch();
+  }, [task, updateData, refetch]);
 
   const dueDateInfo = useMemo(() => {
     if (task?.time?.category?.value === 'opportunity') {

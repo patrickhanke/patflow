@@ -13,6 +13,9 @@ const useFindRecordForDate: (D: { date: string }) => Record | undefined = ({
   const [allRecords, setAllRecords] = useState<any[]>([]);
   const [lastFetch, setLastFetch] = useState<number>(NaN);
 
+  console.log({ records });
+  console.log({ user });
+
   const loadRecords = useCallback(async () => {
     if (!isReady || !user?.objectId) return;
 

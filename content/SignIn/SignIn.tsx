@@ -1,5 +1,12 @@
 import React, { useCallback, useContext } from 'react';
-import { Image, Text, View } from 'react-native';
+import {
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Text,
+  View
+} from 'react-native';
 import { Button, TextInput, ThemeContext, useParseAuth } from '@provider';
 import styles from './styles';
 import logo from './images/logo_patflow.png';
@@ -38,45 +45,53 @@ const SignIn = () => {
   }, [values, login]);
 
   return (
-    <View
+    <KeyboardAvoidingView
       style={[
-        styles.signInContainer,
+        styles.signInAvoiding,
         { backgroundColor: themeColors.background }
       ]}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <View>
-        <Image source={logo} style={{ width: 120, height: 120 }} />
-      </View>
-      <Text style={applicationStyles.medium_header}>Login</Text>
-      <View style={{ width: 240, alignItems: 'center' }}>
-        <Text style={applicationStyles.label}>E-Mail</Text>
-        <TextInput
-          defaultValue=""
-          placeholder="E-Mail"
-          onChange={value => setValues({ ...values, email: value })}
-        />
-      </View>
-      <View style={{ width: 240, alignItems: 'center' }}>
-        <Text style={applicationStyles.label}>Passwort</Text>
-        <TextInput
-          defaultValue=""
-          placeholder="Passwort"
-          onChange={value => setValues({ ...values, password: value })}
-          secureTextEntry
-        />
-      </View>
-      <View>
-        {error && <Text style={applicationStyles.error_message}>{error}</Text>}
-        <Button
-          text={loading || authLoading ? 'Lädt...' : 'Login'}
-          onPress={loginHandler}
-          disabled={loading || authLoading}
-          color={themeColors.primary}
-          size="medium"
-        />
-      </View>
-      {/* <Button title="UserData" onPress={getUser} /> */}
-    </View>
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={styles.signInContainer}
+        showsVerticalScrollIndicator={false}
+      >
+        <View>
+          <Image source={logo} style={{ width: 120, height: 120 }} />
+        </View>
+        <Text style={applicationStyles.medium_header}>Login</Text>
+        <View style={{ width: 240, alignItems: 'center' }}>
+          <Text style={applicationStyles.label}>E-Mail</Text>
+          <TextInput
+            defaultValue=""
+            placeholder="E-Mail"
+            onChange={value => setValues({ ...values, email: value })}
+          />
+        </View>
+        <View style={{ width: 240, alignItems: 'center' }}>
+          <Text style={applicationStyles.label}>Passwort</Text>
+          <TextInput
+            defaultValue=""
+            placeholder="Passwort"
+            onChange={value => setValues({ ...values, password: value })}
+            secureTextEntry
+          />
+        </View>
+        <View>
+          {error && (
+            <Text style={applicationStyles.error_message}>{error}</Text>
+          )}
+          <Button
+            text={loading || authLoading ? 'Lädt...' : 'Login'}
+            onPress={loginHandler}
+            disabled={loading || authLoading}
+            color={themeColors.primary}
+            size="medium"
+          />
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 

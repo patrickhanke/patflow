@@ -1,12 +1,17 @@
 import { DefaultWorkingDay } from '@types';
-import { formatISO9075 } from 'date-fns';
+import { absoluteDateKey } from '../../../functions/absoluteTime';
 
 const getDefaultTime: (date: string) => DefaultWorkingDay = date => {
+  const day = absoluteDateKey(date) || date;
+  const [yearText, monthText] = day.split('-');
+  const year = Number(yearText);
+  const month = Number(monthText);
+
   return {
     objectId: '',
-    month: new Date(date).getMonth(),
-    year: new Date(date).getFullYear(),
-    date: date,
+    month: Number.isNaN(month) ? new Date().getMonth() : month - 1,
+    year: Number.isNaN(year) ? new Date().getFullYear() : year,
+    date: day,
     is_working_day: true,
     absence: null,
     saldo: 0,
@@ -15,16 +20,16 @@ const getDefaultTime: (date: string) => DefaultWorkingDay = date => {
     surcharges: [],
     time: {
       type: 'regular',
-      start: `${date}T08:00:00`,
-      end: `${date}T16:30:00`,
+      start: `${day}T08:00:00`,
+      end: `${day}T16:30:00`,
       pause: 0,
       comment: '',
       duration: 0,
       state: 'initial',
       breaks: [
         {
-          start: `${formatISO9075(new Date(date), { representation: 'date' })}T14:00:00`,
-          end: `${formatISO9075(new Date(date), { representation: 'date' })}T14:30:00`,
+          start: `${day}T14:00:00`,
+          end: `${day}T14:30:00`,
           id: new Date().toISOString()
         }
       ]

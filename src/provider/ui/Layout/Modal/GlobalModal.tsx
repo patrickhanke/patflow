@@ -11,7 +11,6 @@ import {
   Animated,
   KeyboardAvoidingView,
   Modal,
-  Platform,
   Pressable,
   Text,
   View
@@ -20,6 +19,7 @@ import { iconRender, ThemeContext } from '@provider';
 import styles from './globalModalStyles';
 import { ModalProps } from './types';
 import { useBackHandler } from '@react-native-community/hooks';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const GlobalModal: FC<ModalProps> = ({
   isVisible,
@@ -29,6 +29,7 @@ const GlobalModal: FC<ModalProps> = ({
   title
 }) => {
   const { themeColors, theme, applicationStyles } = useContext(ThemeContext);
+  const insets = useSafeAreaInsets();
   const [shouldRender, setShouldRender] = useState(isVisible);
   const slideAnim = useRef(new Animated.Value(500)).current; // Initial position off screen right
 
@@ -92,7 +93,10 @@ const GlobalModal: FC<ModalProps> = ({
         style={[
           styles.modal,
           {
-            transform: [{ translateX: slideAnim }]
+            transform: [{ translateX: slideAnim }],
+            backgroundColor: themeColors.background,
+            paddingTop: insets.top,
+            paddingBottom: insets.bottom
           }
         ]}
       >
@@ -122,7 +126,7 @@ const GlobalModal: FC<ModalProps> = ({
           </Text>
         </View>
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          behavior="padding"
           style={[
             styles.modalContent,
             { backgroundColor: themeColors.background }

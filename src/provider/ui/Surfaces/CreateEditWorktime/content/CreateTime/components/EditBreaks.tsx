@@ -2,14 +2,13 @@ import React, { FC, useContext, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { EditBreaksProps } from '../types';
 import styles from '../styles';
+import { Button, DateTimePickerModal, Divider, ThemeContext } from '@provider';
 import {
-  Button,
-  DateTimePickerModal,
-  Divider,
-  getStringFromDate,
-  ThemeContext
-} from '@provider';
-import { formatISO9075 } from 'date-fns';
+  absoluteDateTimeToDate,
+  absoluteTimeLabel,
+  toAbsoluteDateTime,
+  withAbsoluteClock
+} from '../../../functions/absoluteTime';
 
 const EditBreaks: FC<EditBreaksProps> = ({
   breakItem,
@@ -19,9 +18,8 @@ const EditBreaks: FC<EditBreaksProps> = ({
 }) => {
   const { themeColors, applicationStyles } = useContext(ThemeContext);
   const [datePicker, setDatePicker] = useState<'start' | 'end' | undefined>();
-
-  const [breakStart, setBreakStart] = useState(new Date(breakItem.start));
-  const [breakEnd, setBreakEnd] = useState(new Date(breakItem.end));
+  const breakStart = absoluteDateTimeToDate(breakItem.start);
+  const breakEnd = absoluteDateTimeToDate(breakItem.end);
 
   return (
     <View
@@ -71,10 +69,7 @@ const EditBreaks: FC<EditBreaksProps> = ({
                     }
                   ]}
                 >
-                  {new Date(breakItem.start).toLocaleTimeString('de-DE', {
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}
+                  {absoluteTimeLabel(breakItem.start)}
                 </Text>
               </View>
             </Pressable>
@@ -104,43 +99,32 @@ const EditBreaks: FC<EditBreaksProps> = ({
                     }
                   ]}
                 >
-                  {new Date(breakItem.end).toLocaleTimeString('de-DE', {
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}
+                  {absoluteTimeLabel(breakItem.end)}
                 </Text>
               </View>
             </Pressable>
           </View>
         </View>
         <DateTimePickerModal
-          date={datePicker === 'start' ? breakStart : breakEnd}
+          date={(datePicker === 'start' ? breakStart : breakEnd) ?? new Date()}
           mode="time"
           locale="de"
-          onDateChange={newDate => {
-            if (datePicker === 'start') {
-              setBreakStart(newDate);
-            } else {
-              setBreakEnd(newDate);
-            }
-          }}
           minuteInterval={1}
           title={datePicker === 'start' ? 'Startzeit' : 'Endzeit'}
           open={datePicker === 'start' || datePicker === 'end'}
           cancelText="Abbrechen"
           confirmText="Bestätigen"
           onConfirm={confirmedDate => {
-            const nextStart =
-              datePicker === 'start' && confirmedDate
-                ? confirmedDate
-                : breakStart;
-            const nextEnd =
-              datePicker === 'end' && confirmedDate ? confirmedDate : breakEnd;
-
             setBreak({
               ...breakItem,
-              start: formatISO9075(getStringFromDate(nextStart)),
-              end: formatISO9075(getStringFromDate(nextEnd))
+              start:
+                datePicker === 'start' && confirmedDate
+                  ? withAbsoluteClock(breakItem.start, confirmedDate)
+                  : toAbsoluteDateTime(breakItem.start),
+              end:
+                datePicker === 'end' && confirmedDate
+                  ? withAbsoluteClock(breakItem.end, confirmedDate)
+                  : toAbsoluteDateTime(breakItem.end)
             });
             setDatePicker(undefined);
           }}

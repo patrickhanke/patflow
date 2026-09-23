@@ -1,4 +1,5 @@
 import { DayTimeBreak } from '@types';
+import { absoluteDiffMs } from '../../../functions/absoluteTime';
 
 export const getPauseTime = (breaks: DayTimeBreak[]): number => {
   let pause = 0;
@@ -6,11 +7,11 @@ export const getPauseTime = (breaks: DayTimeBreak[]): number => {
     return pause;
   }
   breaks.forEach(breakItem => {
-    if (!breakItem.start || !breakItem.end) {
+    const duration = absoluteDiffMs(breakItem.end, breakItem.start);
+    if (Number.isNaN(duration)) {
       return;
     }
-    pause +=
-      new Date(breakItem.end).getTime() - new Date(breakItem.start).getTime();
+    pause += duration;
   });
   return pause;
 };

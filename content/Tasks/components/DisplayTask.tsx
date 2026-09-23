@@ -45,8 +45,17 @@ const DisplayTask = ({ isAdmin = false }: { isAdmin?: boolean }) => {
       updateObject: { dates: nextDates },
       feedback: 'Aufgabe erfolgreich als erledigt markiert'
     });
+
+    const store = useDataStore.getState();
+    if (nextDates.length === 0) {
+      store.removeData([intentTask.objectId], 'tasks');
+    } else {
+      store.upsertData([{ ...intentTask, dates: nextDates }], 'tasks');
+    }
+
     clearIntent();
-  }, [intentTask, updateData, clearIntent]);
+    await loadTasks();
+  }, [intentTask, updateData, clearIntent, loadTasks]);
 
   if (!intentTask) return null;
 

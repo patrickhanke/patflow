@@ -6,6 +6,7 @@ import {
   TextInput,
   ThemeContext,
   useDataHandler,
+  useFindData,
   useParse
 } from '@provider';
 import { Day, ErrorMessage } from '@types';
@@ -32,6 +33,7 @@ const CreateVacation = ({
   const { user } = useContext(AppContext);
   const { themeColors, applicationStyles } = useContext(ThemeContext);
   const [loading, setLoading] = useState(false);
+  const { loadAbsences } = useFindData();
 
   const [dayData, setDayData] = useState<Day[]>([]);
 
@@ -202,6 +204,7 @@ const CreateVacation = ({
         }
       });
     }
+    await loadAbsences({ userId: user.objectId });
     setLoading(false);
     setCreateTime(false);
   }, [absenceState, record, user]);
@@ -252,6 +255,7 @@ const CreateVacation = ({
               });
             }}
             year={record?.year}
+            key={absenceState.start_date}
           />
           <EditTime
             date={
@@ -269,6 +273,7 @@ const CreateVacation = ({
               });
             }}
             year={record?.year}
+            key={absenceState.end_date}
           />
         </View>
         <View>

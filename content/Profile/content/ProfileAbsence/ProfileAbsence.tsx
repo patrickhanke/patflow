@@ -59,7 +59,11 @@ const ProfileAbsence = ({ user }: { user: UserDisplayData }) => {
     if (records.length > 0) {
       records.forEach(rc => {
         if (rc.year) {
-          years.push({ label: rc.year.toString(), value: rc.year });
+          years.push({
+            label: `${rc.year.toString()} (${new Date(rc.start_date).toLocaleDateString()} - ${new Date(rc.end_date).toLocaleDateString()})`,
+            id: `${rc.year.toString()}_${rc.start_date}_${rc.end_date}`,
+            value: rc.year
+          });
         }
       });
     }
@@ -118,7 +122,7 @@ const ProfileAbsence = ({ user }: { user: UserDisplayData }) => {
             value={year}
             onChange={value => setYear(value)}
             labelField="label"
-            valueField="value"
+            valueField="id"
           />
         </View>
 

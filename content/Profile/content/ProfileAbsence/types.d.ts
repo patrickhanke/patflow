@@ -25,6 +25,7 @@ export type AbsenceMemo = {
 };
 
 export type YearOptions = {
+  id: string;
   value: number;
   label: string;
 }[];

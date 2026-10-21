@@ -395,7 +395,7 @@ const useFindData = () => {
       const UserClass = Parse.Object.extend('_User');
       const userPointer = UserClass.createWithoutData(userId);
       const currentYear = new Date().getFullYear();
-      const currentYearArray = [currentYear, currentYear - 1];
+      const currentYearArray = [currentYear, currentYear - 1, currentYear + 1];
       return coalesceFetch(`records:${userId}`, () =>
         loadData<RecordType>({
           className: 'Record',
@@ -434,7 +434,7 @@ const useFindData = () => {
   const loadAbsences = useCallback(
     async ({ userId }: { userId: string }): Promise<Absence[]> => {
       const currentYear = new Date().getFullYear();
-      const currentYearArray = [currentYear, currentYear - 1];
+      const currentYearArray = [currentYear, currentYear - 1, currentYear + 1];
 
       const UserClass = Parse.Object.extend('_User');
       return coalesceFetch(`absences:${userId}`, () =>
